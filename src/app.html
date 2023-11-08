@@ -8,16 +8,38 @@
 	%sveltekit.head%
 
 	<style>
-		
-		html, body, body>div{
+		html,
+		body,
+		body>div {
 			margin: 0;
 			height: 100%;
 		}
 
-		*, *::before, *::after{
+		*,
+		*::before,
+		*::after {
 			box-sizing: border-box;
 		}
 
+		.error {
+			background-color: #f43;
+			color: black;
+		}
+
+		.ok {
+			background-color: #5e3;
+			color: black;
+		}
+
+		.info {
+			background-color: #43f;
+			color: white;
+		}
+
+		.warning {
+			background-color: #ff4;
+			color: black;
+		}
 	</style>
 </head>
 
