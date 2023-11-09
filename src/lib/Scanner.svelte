@@ -1,98 +1,70 @@
 <script lang="ts">
-    import { afterUpdate, createEventDispatcher, onMount } from "svelte";
-    import { Html5QrcodeScanner, Html5QrcodeScanType } from "html5-qrcode";
-    import type {
-        Html5QrcodeScanner as HType,
+    import { createEventDispatcher, onMount } from "svelte";
+    import {
+        Html5QrcodeScanner,
+        Html5QrcodeScanType,
+        Html5QrcodeSupportedFormats,
     } from "html5-qrcode";
-
-    export let text = "Masuk"
+    import type { Html5QrcodeScanner as HType } from "html5-qrcode";
+    import { browser } from "$app/environment";
 
     const d = createEventDispatcher();
-    let scanning = false;
+    let el: HTMLElement;
 
     let html5QrcodeScanner: HType;
 
-    async function onScanSuccess(
-        decodedText: string,
-    ) {
+    async function onScanSuccess(decodedText: string) {
         d("scan", decodedText);
 
         if (1 !== html5QrcodeScanner.getState()) {
             html5QrcodeScanner.pause(true);
             html5QrcodeScanner.clear();
         }
-
-        // scanning = false;
     }
 
-    afterUpdate(() => {
-        if (scanning) {
+    onMount(() => {
+        if (browser) {
             html5QrcodeScanner = new Html5QrcodeScanner(
-                "qr-reader",
+                el.id,
                 {
                     fps: 10,
                     qrbox: 250,
                     rememberLastUsedCamera: true,
-                    supportedScanTypes: [
-                        Html5QrcodeScanType.SCAN_TYPE_CAMERA,
-                        Html5QrcodeScanType.SCAN_TYPE_FILE,
-                    ],
+                    supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+                    formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
                 },
-                false
+                true
             );
 
-            html5QrcodeScanner.render(onScanSuccess, (e) => null);
+            html5QrcodeScanner.render(onScanSuccess, undefined);
         }
     });
-
-    export function scan(){
-        scanning = true
-    }
-
-    export function stop(){
-        scanning = false
-    }
-
 </script>
 
 <div class="c">
-    <div>
-        <strong>{text}</strong>
-    </div>
-
-    {#if scanning}
-    <div id="qr-reader" />
-    {/if}
-
-
+    <div id="qr-reader" bind:this={el} />
 </div>
 
-    
+<style>
+    #qr-reader {
+        z-index: 1;
+        position: relative;
+        border: 0 !important;
+        width: 80vw;
+        height: 80vh;
+    }
 
-    <style>
-        #qr-reader{
-            height: 100%;
-            z-index: 1;
-            position: relative;
-            border: 0  !important;
-        }
+    .c {
+        height: 100%;
+        display: grid;
+        grid-template-rows: 1fr;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 2rem;
+    }
 
-        .c{
-            height: 100%;
-            display: grid;
-            grid-template-rows: auto 1fr;
-            align-items: center;
-            text-align: center;
-            gap: 2rem;
-        }
-
-        .c > div{
-            height: 100%;
-        }
-
-        strong{
-            font-size: xx-large;
-            text-align: center;
-        }
-
-    </style>
+    .c > div {
+        height: 100%;
+    }
+</style>

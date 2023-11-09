@@ -3,7 +3,15 @@
 
 <head>
 	<meta charset="utf-8" />
-	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
+	<link rel="icon" type="image/x-icon" href="%sveltekit.assets%/favicon.ico" />
+	<link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="%sveltekit.assets%/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicon-16x16.png">
+	<link rel="icon" type="image/png" href="%sveltekit.assets%/favicon.png" />
+	<link rel="manifest" href="%sveltekit.assets%/site.webmanifest">
+	<link rel="mask-icon" href="%sveltekit.assets%/safari-pinned-tab.svg" color="#eedd77">
+	<meta name="msapplication-TileColor" content="#da532c">
+	<meta name="theme-color" content="#ffffff">
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	%sveltekit.head%
 
@@ -39,6 +47,11 @@
 		.warning {
 			background-color: #ff4;
 			color: black;
+		}
+
+		#qr-reader__dashboard,
+		#qr-reader__scan_region {
+			background-color: #555;
 		}
 	</style>
 </head>

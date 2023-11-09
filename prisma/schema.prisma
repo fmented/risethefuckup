@@ -22,5 +22,8 @@ model Ticket {
   used Int @default(0)
   last_used DateTime @updatedAt
   class TicketClass
+  owned Boolean @default(false)
+
+  @@index([qr])
 }
 

@@ -9,10 +9,13 @@
 </script>
 
 <div class="links">
-    <a href="/" class:active-link={location?.pathname == "/"}>Masuk</a>
+    <a href="/" class:active-link={location?.pathname == "/"} rel="external"
+        >Masuk</a
+    >
     <a
         href="/revalidate"
-        class:active-link={location?.pathname == "/revalidate"}>Revalidasi</a
+        class:active-link={location?.pathname == "/revalidate"}
+        rel="external">Revalidasi</a
     >
 </div>
 
@@ -28,6 +31,7 @@
         justify-content: space-between;
         padding: 0.5em;
         font-weight: 600;
+        background-color: #555;
     }
 
     .links > a.active-link {

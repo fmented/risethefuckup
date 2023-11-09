@@ -1,65 +1,65 @@
-import { PrismaClient, TicketClass, type Ticket} from '@prisma/client'
+import { PrismaClient, TicketClass, type Ticket } from '@prisma/client'
 
 const prisma = new PrismaClient().$extends({
     result: {
-      ticket: {
-        valid: {
-          needs: {used: true },
-          compute(ticket) {
-            return ticket.used === 0
-          },
+        ticket: {
+            valid: {
+                needs: { used: true },
+                compute(ticket) {
+                    return ticket.used === 0
+                },
+            },
         },
-      },
     },
-  })
+})
 
-export type TicketExtended = Ticket & {valid: boolean}
+export type TicketExtended = Ticket & { valid: boolean }
 
-export async function getQrUsedCount(qr:string): Promise<TicketExtended|null>{
+export async function getQrUsedCount(qr: string): Promise<TicketExtended | null> {
     try {
         const x = await prisma.ticket.findUnique({
-           where : {qr}
+            where: { qr }
         })
-        
-        return x? x : null
+
+        return x ? x : null
     } catch (error) {
         console.error(error)
         return null
     }
 }
 
-export async function addCount(qr:string) : Promise<TicketExtended|null>{
+export async function addCount(qr: string): Promise<TicketExtended | null> {
     try {
         const x = await prisma.ticket.update({
             where: {
                 qr
             },
-            data:{
-                used:{increment:1}
+            data: {
+                used: { increment: 1 }
             }
         })
-        
-        return x? {...x, used:x.used-1} : null
-        
+
+        return x ? { ...x, used: x.used - 1 } : null
+
     } catch (error) {
         console.error(error)
         return null
     }
 }
 
-export async function subtractCount(qr:string) : Promise<TicketExtended|null>{
+export async function subtractCount(qr: string): Promise<TicketExtended | null> {
     try {
         const x = await prisma.ticket.update({
             where: {
                 qr
             },
-            data:{
-                used:{decrement:1}
+            data: {
+                used: { decrement: 1 }
             }
         })
-        
-        return x? {...x, used:x.used-1} : null
-        
+
+        return x ? { ...x, used: x.used - 1 } : null
+
     } catch (error) {
         console.error(error)
         return null
@@ -67,11 +67,11 @@ export async function subtractCount(qr:string) : Promise<TicketExtended|null>{
 }
 
 
-export async function createQr(qr:string, _class:TicketClass) {
+export async function createQr(qr: string, _class: TicketClass) {
     return prisma.ticket.create({
-        data :{
+        data: {
             qr,
-            class:_class
+            class: _class
         }
     })
 }
