@@ -75,7 +75,7 @@
         width: 100vw;
         height: 100%;
         padding: 2em;
-        background: url(./favicon.png);
+        background: url($lib/favicon.png);
         background-size: cover;
         background-position-x: 50%;
         background-repeat: no-repeat;
