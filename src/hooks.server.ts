@@ -5,7 +5,7 @@ export async function handle({ event, resolve }) {
         return new Response(null);
     }
 
-    if (event.url.pathname === "/") {
+    else if (event.url.pathname === "/") {
         const passcode = event.cookies.get("passcode")
 
         if (passcode === import.meta.env.VITE_PASSCODE) {
@@ -16,7 +16,7 @@ export async function handle({ event, resolve }) {
         }
     }
 
-    if (!(event.url.pathname === "/")) {
+    else if (!(event.url.pathname === "/")) {
         if (!event.cookies.get("passcode"))
             return new Response(null, {
                 status: 302,
