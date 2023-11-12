@@ -10,6 +10,7 @@
                     passcode,
                 },
             })
+            .then(window.location.reload);
     }
 </script>
 
