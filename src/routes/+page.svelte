@@ -4,13 +4,17 @@
     function setPasscode() {
         if (!passcode) return;
         window
-            .fetch("/", {
+            .fetch(window.location.href, {
                 method: "POST",
                 headers: {
                     passcode,
                 },
             })
-            .then(window.location.reload);
+            .then((res) => {
+                if (res.ok) {
+                    window.location.reload;
+                }
+            });
     }
 </script>
 
