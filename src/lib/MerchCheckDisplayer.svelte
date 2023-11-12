@@ -21,7 +21,7 @@
 
     $: size = merch?.size;
 
-    $: claimedAt = merch?.claimedAt || 0;
+    $: claimedAt = merch?.claimedAt;
 </script>
 
 <form>
