@@ -2,20 +2,26 @@ import { redirect } from '@sveltejs/kit';
 
 export async function handle({ event, resolve }) {
     if (event.url.pathname.startsWith('/node_modules/')) {
-        return new Response('');
+        return new Response(null);
     }
 
     if (event.url.pathname === "/") {
         const passcode = event.cookies.get("passcode")
 
         if (passcode === import.meta.env.VITE_PASSCODE) {
-            throw redirect(302, "/check-in")
+            return new Response(null, {
+                status: 302,
+                headers: new Headers({ Location: "/check-in" })
+            })
         }
     }
 
     if (!(event.url.pathname === "/")) {
         if (!event.cookies.get("passcode"))
-            throw redirect(302, "/")
+            return new Response(null, {
+                status: 302,
+                headers: new Headers({ Location: "/" })
+            })
     }
 
     const response = await resolve(event);

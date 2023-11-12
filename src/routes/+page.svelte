@@ -10,7 +10,6 @@
                     passcode,
                 },
             })
-            .then((_) => (window.location.pathname = "/check-in"));
     }
 </script>
 
