@@ -10,8 +10,8 @@
 
 <div class="links">
     <a
-        href="/checkin"
-        class:active-link={location?.pathname == "/checkin"}
+        href="/check-in"
+        class:active-link={location?.pathname == "/check-in"}
         rel="external">Masuk</a
     >
     <a
