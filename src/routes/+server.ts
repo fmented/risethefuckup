@@ -4,7 +4,7 @@ export const POST: RequestHandler = async ({ cookies, request }) => {
 
     try {
         const passcode = request.headers.get("passcode")
-        if (typeof passcode === "string" && passcode === process.env.PASSCODE) {
+        if (typeof passcode === "string" && passcode === import.meta.env.PASSCODE) {
             cookies.set("passcode", passcode)
             throw redirect(302, "checkin")
         }
