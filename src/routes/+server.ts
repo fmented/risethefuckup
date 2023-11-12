@@ -9,7 +9,7 @@ export const POST: RequestHandler = async ({ cookies, request, }) => {
                 path: "/",
             })
             return new Response(null, {
-                status: 302,
+                status: 301,
                 headers: new Headers({ Location: "/check-in" })
             })
         }
