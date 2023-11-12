@@ -13,11 +13,11 @@ export const POST: RequestHandler = async ({ cookies, request, }) => {
                 headers: new Headers({ Location: "/check-in" })
             })
         }
-        return new Response(JSON.stringify({ status: "failed" }));
+        return new Response(JSON.stringify({ status: import.meta.env.VITE_PASSCODE }));
 
     } catch (error) {
         console.log(error)
     }
 
-    return new Response(JSON.stringify({ status: "failed" }));
+    return new Response(JSON.stringify({ status: import.meta.env.VITE_PASSCODE }));
 }
