@@ -5,7 +5,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
     try {
         const passcode = request.headers.get("passcode")
-        return new Response(JSON.stringify({ status: passcode === import.meta.env.PASSCODE ? "success" : "failed" }));
+        return new Response(JSON.stringify({ status: passcode === import.meta.env.VITE_PASSCODE ? "success" : "failed" }));
 
     } catch (error) {
         console.log(error)

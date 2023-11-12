@@ -7,8 +7,9 @@ export async function handle({ event, resolve }) {
 
     if (event.url.pathname === "/") {
         const passcode = event.cookies.get("passcode")
-        if (typeof passcode === "string" && passcode === import.meta.env.PASSCODE) {
-            throw redirect(302, "checkin")
+
+        if (passcode === import.meta.env.VITE_PASSCODE) {
+            throw redirect(302, "/check-in")
         }
     }
 

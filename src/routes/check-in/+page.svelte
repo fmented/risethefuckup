@@ -9,7 +9,7 @@
 
     async function onScanSuccess(decodedText: string) {
         const res: Awaited<APIResponse<CheckReturn<Ticket>>> = await (
-            await window.fetch(`api/v1/check`, {
+            await window.fetch(`/api/v1/check`, {
                 body: JSON.stringify({ qr: decodedText }),
                 method: "POST",
                 headers: {
@@ -24,7 +24,7 @@
     async function ok(ticket: Ticket) {
         if (!ticket.valid) return (data = null);
 
-        await window.fetch(`api/v1/check-in`, {
+        await window.fetch(`/api/v1/check-in`, {
             body: JSON.stringify(ticket),
             method: "POST",
             headers: {

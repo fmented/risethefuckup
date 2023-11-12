@@ -12,7 +12,7 @@
     function order() {
         if (!(name && size)) return;
         window
-            .fetch(`api/v1/order-merch`, {
+            .fetch(`/api/v1/order-merch`, {
                 body: JSON.stringify({
                     size,
                     name,
@@ -25,7 +25,7 @@
             })
             .then((res) => {
                 res.json().then((v: Merch) => {
-                    window.location.href = "order-succes/" + v.qr;
+                    window.location.pathname = "/order-succes/" + v.qr;
                 });
             });
     }
