@@ -29,6 +29,7 @@
 	"dependencies": {
 		"@prisma/client": "^5.5.2",
 		"@sveltejs/adapter-vercel": "^3.0.3",
+		"cookie": "^0.6.0",
 		"html5-qrcode": "^2.3.8",
 		"prisma": "^5.5.2",
 		"qrcode-svg": "^1.1.0"
