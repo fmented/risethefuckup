@@ -12,7 +12,7 @@
             })
             .then((res) => {
                 if (res.ok) {
-                    window.location.reload;
+                    window.location.pathname = "/check-in";
                 }
             });
     }
