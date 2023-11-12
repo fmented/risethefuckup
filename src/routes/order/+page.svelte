@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { MerchSize } from "@prisma/client";
     import type { Merch } from "$lib";
     import Header from "$lib/Header.svelte";
 
     let name = "";
     let size = "";
-    const sizes = Object.keys(MerchSize);
+    const sizes = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
     $: good = name && size;
 
