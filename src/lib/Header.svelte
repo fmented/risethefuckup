@@ -9,13 +9,27 @@
 </script>
 
 <div class="links">
-    <a href="/" class:active-link={location?.pathname == "/"} rel="external"
-        >Masuk</a
+    <a
+        href="/checkin"
+        class:active-link={location?.pathname == "/checkin"}
+        rel="external">Masuk</a
     >
     <a
-        href="/revalidate"
-        class:active-link={location?.pathname == "/revalidate"}
-        rel="external">Revalidasi</a
+        href="/claim"
+        class:active-link={location?.pathname == "/claim"}
+        rel="external">Merch</a
+    >
+
+    <a
+        href="/stats"
+        class:active-link={location?.pathname.startsWith("/stats")}
+        rel="external">Stats</a
+    >
+
+    <a
+        href="/order"
+        class:active-link={location?.pathname.startsWith("/order")}
+        rel="external">Order</a
     >
 </div>
 
@@ -32,10 +46,17 @@
         padding: 0.5em;
         font-weight: 600;
         background-color: #555;
+        padding-inline: 2em;
     }
 
     .links > a.active-link {
         background-color: #ed7;
         color: #555;
+    }
+
+    @media print {
+        .links {
+            display: none;
+        }
     }
 </style>

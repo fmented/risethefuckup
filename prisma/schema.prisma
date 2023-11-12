@@ -14,16 +14,32 @@ enum TicketClass {
   REGULAR
   PRESALE
   BUNDLING
+  OTS
 }
 
 model Ticket {
-  id Int @id @default(autoincrement())
-  qr String @unique
-  used Int @default(0)
-  last_used DateTime @updatedAt
-  class TicketClass
-  owned Boolean @default(false)
+  qr        String    @id @unique
+  checkInAt DateTime?
 
   @@index([qr])
 }
 
+enum MerchSize {
+  XS
+  S
+  M
+  L
+  XL
+  XXL
+  XXXL
+}
+
+model Merch {
+  qr        String    @id @unique
+  size      MerchSize
+  name      String
+  claimedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([qr])
+}

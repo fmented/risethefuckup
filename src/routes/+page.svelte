@@ -1,84 +1,59 @@
 <script lang="ts">
-    import Scanner from "$lib/Scanner.svelte";
-    import ResponseDisplayer from "$lib/ResponseDisplayer.svelte";
-    import Header from "$lib/Header.svelte";
-    import type { TicketExtended } from "$lib";
-    import ErrorDisplayer from "$lib/ErrorDisplayer.svelte";
+    let passcode = "";
 
-    let data: TicketExtended | { error: string } | null = null;
-
-    async function onScanSuccess(decodedText: string) {
-        const res: TicketExtended | { error: string } = await (
-            await window.fetch(`/qr`, {
-                body: JSON.stringify({ qr: decodedText }),
+    function setPasscode() {
+        if (!passcode) return;
+        window
+            .fetch("/", {
                 method: "POST",
                 headers: {
-                    "content-type": "application/json",
+                    passcode,
                 },
             })
-        ).json();
-
-        data = { ...res };
-    }
-
-    async function ok(qr: TicketExtended) {
-        if (qr.used > 0) return (data = null);
-
-        await window.fetch(`/in`, {
-            body: JSON.stringify(qr),
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-            },
-        });
-
-        data = null;
-    }
-
-    async function buttonCallback() {
-        if (data !== null && "used" in data) return ok(data);
-        data = null;
+            .then((_) => window.location.reload());
     }
 </script>
 
-<div class="fuck">
-    <Header />
-    <div class="main">
-        {#if data}
-            {#if "valid" in data}
-                <ResponseDisplayer {data} />
-            {:else}
-                <ErrorDisplayer {data} />
-            {/if}
-        {:else}
-            <Scanner on:scan={(e) => onScanSuccess(e.detail)} />
-        {/if}
+<form>
+    <div>
+        <label for="passcode">Passcode</label>
+        <input type="text" bind:value={passcode} id="passcode" />
     </div>
-
-    {#if data}
-        <button on:click={buttonCallback} class="info"
-            >{data === null ? "Scan" : "OK"}</button
-        >
+    {#if passcode}
+        <button class="info" on:click={setPasscode}>Check Passcode</button>
     {/if}
-</div>
+</form>
 
 <style>
-    .fuck {
-        display: grid;
-        height: 100%;
-        grid-template-rows: auto 1fr;
+    label {
         color: #ed7;
-        background-color: #555;
+    }
+    input {
+        width: calc(calc(100vw - 18ch) - 2em);
+        padding: 1em;
+        border-radius: 0.25em;
+        font-weight: bold;
+        font-size: 16px;
+        color: black;
     }
 
-    .fuck > .main {
-        width: 100vw;
+    div {
+        display: flex;
+        justify-content: space-between;
+        gap: 2em;
+        align-items: center;
+        font-size: large;
+        padding: 1rem;
+    }
+
+    form {
         height: 100%;
-        padding: 2em;
-        background: url($lib/favicon.png);
-        background-size: cover;
-        background-position-x: 50%;
-        background-repeat: no-repeat;
+        font-size: large;
+        display: flex;
+        flex-direction: column;
+        gap: 2em;
+        background-color: #555;
+        padding-bottom: 4rem;
     }
 
     button {
@@ -91,5 +66,11 @@
     button {
         font-size: 16px;
         padding: 2em;
+    }
+
+    @media print {
+        button {
+            display: none;
+        }
     }
 </style>

@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { TicketExtended } from "./index.js";
+    import type { Ticket } from "./index.js";
     import QRCode from "qrcode-svg";
 
-    export let data: TicketExtended;
+    export let ticket: Ticket;
 
     const f = Intl.DateTimeFormat("id", {
         dateStyle: "long",
@@ -12,13 +12,11 @@
 
     export let inverse = false;
 
-    $: qr = data.qr;
+    $: qr = ticket.qr;
 
-    $: valid = data.valid;
+    $: valid = ticket.valid;
 
-    $: last_used = data.last_used;
-
-    $: cls = data.class;
+    $: checkInAt = ticket.checkInAt;
 </script>
 
 <form>
@@ -46,18 +44,14 @@
                 class:ok={!inverse ? valid : !valid}
             />
         </div>
-        <div>
-            <label for="class">Class</label>
-            <input type="text" value={cls} disabled id="class" />
-        </div>
     {/if}
 
-    {#if !valid}
+    {#if checkInAt !== null}
         <div>
             <label for="stadatetus">Used At</label>
             <input
                 type="datetime"
-                value={f.format(new Date(last_used))}
+                value={f.format(new Date(checkInAt))}
                 disabled
                 id="date"
             />
