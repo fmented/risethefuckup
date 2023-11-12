@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
     let passcode = "";
 
     function setPasscode() {
@@ -77,4 +77,4 @@
             display: none;
         }
     }
-</style>
+</style> -->
