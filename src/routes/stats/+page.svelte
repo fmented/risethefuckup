@@ -24,7 +24,7 @@
     <div class="main">
         <div>
             <h1>Merch</h1>
-            <small>{data?.merchs.length} Rows</small>
+            <small>{data?.merchs?.length || 0} Rows</small>
             <table>
                 <thead>
                     <tr>
@@ -54,7 +54,7 @@
         </div>
         <div>
             <h1>Ticket</h1>
-            <small>{data?.tickets.length} Rows</small>
+            <small>{data?.tickets?.length || 0} Rows</small>
             <table>
                 <thead>
                     <tr>
