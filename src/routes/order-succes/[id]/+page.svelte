@@ -7,7 +7,8 @@
     export let data: Merch | null = null;
 
     async function buttonCallback() {
-        window.print();
+        if (!data) return;
+        window.location.pathname = "/api/v1/merchpdf" + data.qr;
     }
 </script>
 

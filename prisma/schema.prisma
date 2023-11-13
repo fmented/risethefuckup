@@ -21,6 +21,8 @@ model Ticket {
   qr        String    @id @unique
   checkInAt DateTime?
   name      String?
+  id        String    @default(uuid())
+  createdAt DateTime  @default(now())
 
   @@index([qr])
 }
@@ -41,6 +43,7 @@ model Merch {
   name      String
   claimedAt DateTime?
   createdAt DateTime  @default(now())
+  id        String    @default(uuid())
 
   @@index([qr])
 }

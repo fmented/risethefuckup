@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { Merch, Ticket } from "$lib";
-    import { browser } from "$app/environment";
     import Header from "$lib/Header.svelte";
 
     export let data: { merchs: Merch[]; tickets: Ticket[] } = {
@@ -28,7 +27,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>QR</th>
+                        <th>ID</th>
                         <th>Name</th>
                         <th>Size</th>
                         <th>Redeemed At</th>
@@ -38,7 +37,8 @@
                 <tbody>
                     {#each data?.merchs || [] as r}
                         <tr>
-                            <td>{r.qr}</td>
+                            <td><a href="/api/v1/merchpdf/{r.qr}">{r.id}</a></td
+                            >
                             <td>{r.name}</td>
                             <td>{r.size}</td>
                             <td
@@ -58,7 +58,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>QR</th>
+                        <th>ID</th>
                         <th>Name</th>
                         <th>Checked-In At</th>
                         <th>Valid</th>
@@ -67,7 +67,10 @@
                 <tbody>
                     {#each data?.tickets || [] as r}
                         <tr>
-                            <td>{r.qr}</td>
+                            <td
+                                ><a href="/api/v1/ticketpdf/{r.qr}">{r.id}</a
+                                ></td
+                            >
                             <td>{r.name}</td>
                             <td
                                 >{r.checkInAt
@@ -113,12 +116,14 @@
         border-collapse: collapse;
     }
 
-    .fuck {
+    .fuck,
+    a {
         display: grid;
         height: 100%;
         grid-template-rows: auto 1fr;
         color: #ed7;
         background-color: #222;
+        text-decoration: none;
     }
 
     .fuck > .main {

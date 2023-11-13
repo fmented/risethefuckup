@@ -7,7 +7,8 @@
     export let data: Ticket | null = null;
 
     async function buttonCallback() {
-        window.print();
+        if (!data) return;
+        window.location.pathname = "/api/v1/ticketpdf" + data.qr;
     }
 </script>
 
