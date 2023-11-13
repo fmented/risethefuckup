@@ -59,6 +59,7 @@
                 <thead>
                     <tr>
                         <th>QR</th>
+                        <th>Name</th>
                         <th>Checked-In At</th>
                         <th>Valid</th>
                     </tr>
@@ -67,6 +68,7 @@
                     {#each data?.tickets || [] as r}
                         <tr>
                             <td>{r.qr}</td>
+                            <td>{r.name}</td>
                             <td
                                 >{r.checkInAt
                                     ? f.format(new Date(r.checkInAt))
