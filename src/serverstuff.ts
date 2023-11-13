@@ -309,7 +309,7 @@ export function generateReceipt(data: { name: string, qr: string, size: MerchSiz
             width: page.height - page.margin * 2
         })
         p.fontSize(48)
-        p.font(`.${font}`)
+        p.font(import.meta.env.DEV ? `.${font}` : font)
 
         p.text("Merch Receipt Rise The Fuck Up", { align: "center" })
         p.moveDown(4)
@@ -7422,7 +7422,7 @@ export function generateTicket(data: { name: string | null, qr: string, id: stri
             width: page.height - page.margin * 2
         })
         p.fontSize(48)
-        p.font(`.${font}`)
+        p.font(import.meta.env.DEV ? `.${font}` : font)
 
         p.text("E-Tiket Rise The Fuck Up", { align: "center" })
         p.moveDown(4)
