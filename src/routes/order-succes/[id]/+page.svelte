@@ -52,7 +52,8 @@
         height: 100%;
         grid-template-rows: auto 1fr;
         color: #ed7;
-        background-color: #555;
+        background: url($lib/favicon2.png);
+        background: #555;
     }
 
     .h1,
