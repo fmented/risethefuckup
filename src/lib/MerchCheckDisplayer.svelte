@@ -35,7 +35,7 @@
                 container: "svg-viewbox",
             }).svg()}
 
-            <img src={favicon} alt="Logo" width="300" />
+            <img src={favicon} alt="Logo" height="340" />
         </div>
     {/if}
 
@@ -134,8 +134,11 @@
             justify-content: space-around;
         }
 
-        img {
+        img,
+        :global(svg) {
             display: initial;
+            height: 320px;
+            aspect-ratio: 1;
         }
     }
 </style>

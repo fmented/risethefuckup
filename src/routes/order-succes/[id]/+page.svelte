@@ -96,12 +96,26 @@
 
         strong {
             font-size: 36px;
-            color: black;
+            color: #ed7;
         }
 
         .note {
-            color: black;
+            color: #ed7;
             display: initial;
+            background-color: #555;
+        }
+
+        .fuck {
+            background: url($lib/favicon2.png);
+            background-position-x: 50%;
+            background-position-y: 65px;
+            background-repeat: no-repeat;
+            height: 100vh;
+            background-size: cover;
+        }
+
+        .fuck > .main {
+            background: #555;
         }
     }
 </style>
