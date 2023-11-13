@@ -3,7 +3,7 @@ import type { Ticket as T, Merch as M } from '@prisma/client'
 
 
 
-export type Ticket = T & { valid: boolean }
+export type Ticket = T & { valid: boolean, name?: string }
 export type Merch = M & { valid: boolean }
 
 

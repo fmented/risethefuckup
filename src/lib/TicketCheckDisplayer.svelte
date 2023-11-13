@@ -1,6 +1,7 @@
 <script lang="ts">
-    import type { Ticket } from "./index.js";
+    import type { Ticket } from "$lib";
     import QRCode from "qrcode-svg";
+    import ETicket from "$lib/ETicket.svelte";
 
     export let ticket: Ticket;
 
@@ -12,16 +13,19 @@
 
     export let inverse = false;
 
-    $: qr = ticket.qr;
-
-    $: valid = ticket.valid;
-
-    $: checkInAt = ticket.checkInAt;
+    $: qr = ticket?.qr;
+    $: valid = ticket?.valid;
+    $: name = ticket?.name;
+    $: checkInAt = ticket?.checkInAt;
 </script>
 
 <form>
     {#if qr !== undefined}
-        <div>
+        <div class="q">
+            <ETicket {qr} />
+        </div>
+
+        <div class="noprint">
             {@html new QRCode({
                 content: qr,
                 background: "#222",
@@ -33,7 +37,7 @@
     {/if}
 
     {#if valid != undefined}
-        <div>
+        <div class="noprint">
             <label for="status">Status</label>
             <input
                 type="text"
@@ -43,6 +47,13 @@
                 class:error={!inverse ? !valid : valid}
                 class:ok={!inverse ? valid : !valid}
             />
+        </div>
+    {/if}
+
+    {#if name != undefined}
+        <div>
+            <label for="name">Name</label>
+            <input type="text" value={name} disabled id="name" />
         </div>
     {/if}
 
@@ -66,6 +77,7 @@
         border-radius: 0.25em;
         font-weight: bold;
         font-size: 16px;
+        color: black;
     }
 
     div {
@@ -77,6 +89,10 @@
         padding: 1rem;
     }
 
+    .q {
+        display: none;
+    }
+
     form {
         height: 100%;
         font-size: large;
@@ -84,5 +100,25 @@
         flex-direction: column;
         gap: 2em;
         background-color: #555;
+        padding-bottom: 4rem;
+    }
+
+    @media print {
+        .noprint {
+            display: none;
+        }
+
+        label {
+            color: black;
+        }
+
+        form {
+            height: max-content;
+        }
+
+        .q {
+            display: flex;
+            justify-content: center;
+        }
     }
 </style>

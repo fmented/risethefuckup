@@ -1,10 +1,10 @@
 <script lang="ts">
-    import ResponseDisplayer from "$lib/MerchCheckDisplayer.svelte";
+    import ResponseDisplayer from "$lib/TicketCheckDisplayer.svelte";
     import Header from "$lib/Header.svelte";
     import ErrorDisplayer from "$lib/ErrorDisplayer.svelte";
-    import type { Merch } from "$lib";
+    import type { Ticket } from "$lib";
 
-    export let data: Merch | null = null;
+    export let data: Ticket | null = null;
 
     async function buttonCallback() {
         window.print();
@@ -14,27 +14,24 @@
 <div class="fuck">
     <Header />
     <div class="main">
-        {#if data && "qr" in data}
+        {#if data !== null && "qr" in data}
             <div class="h1">
-                <strong>Merch Redeem QRCode</strong>
+                <strong>E-Ticket Rise The Fuck Up</strong>
             </div>
-            <ResponseDisplayer merch={data} />
+            <ResponseDisplayer ticket={data} />
             <div class="note">
                 <small>[Note]</small>
                 <br />
-                <small>- Simpan kode QR ini untuk penukaran merchandise.</small>
+                <small>- Simpan kode QR ini untuk memasuki venue.</small>
+                <br />
+                <small>- Satu tiket berlaku untuk satu orang.</small>
                 <br />
                 <small
                     >- Jangan berikan kode QR ini kepada siapapun sebelum
-                    menukarkan merchandise.</small
+                    memasuki venue.</small
                 >
                 <br />
-                <small>- Ukuran yang sudah dipesan tidak dapat dirubah.</small>
-                <br />
-                <small
-                    >- Penukaran merchandise bisa dilakukan di venue atau bisa
-                    juga menghubungi CP kami.</small
-                >
+                <small>- Satu tiket hanya berlaku untuk satu kali masuk.</small>
             </div>
         {:else}
             <ErrorDisplayer data={{ error: "invalid QRCode" }} />
@@ -83,13 +80,17 @@
         padding: 2em;
     }
 
+    small {
+        font-size: 24px;
+    }
+
     @media print {
-        button {
-            display: none;
+        * {
+            color: black;
         }
 
-        small {
-            font-size: 24px;
+        button {
+            display: none;
         }
 
         .h1 {
@@ -97,10 +98,6 @@
             place-items: center;
             text-align: center;
             margin-bottom: 2rem;
-        }
-
-        :global(body) {
-            background-color: #555;
         }
 
         strong {
@@ -125,6 +122,10 @@
 
         .fuck > .main {
             background: #555;
+        }
+
+        :global(body) {
+            background-color: #555;
         }
     }
 </style>

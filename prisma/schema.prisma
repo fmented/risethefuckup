@@ -20,6 +20,7 @@ enum TicketClass {
 model Ticket {
   qr        String    @id @unique
   checkInAt DateTime?
+  name      String?
 
   @@index([qr])
 }

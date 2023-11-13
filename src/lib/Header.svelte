@@ -17,7 +17,7 @@
     <a
         href="/claim"
         class:active-link={location?.pathname == "/claim"}
-        rel="external">Merch</a
+        rel="external">Redeem</a
     >
 
     <a
@@ -27,9 +27,15 @@
     >
 
     <a
+        href="/ticket-order"
+        class:active-link={location?.pathname.startsWith("/ticket")}
+        rel="external">Ticket</a
+    >
+
+    <a
         href="/order"
         class:active-link={location?.pathname.startsWith("/order")}
-        rel="external">Order</a
+        rel="external">Merch</a
     >
 </div>
 
