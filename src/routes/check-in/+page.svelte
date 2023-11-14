@@ -4,6 +4,7 @@
     import Header from "$lib/Header.svelte";
     import ErrorDisplayer from "$lib/ErrorDisplayer.svelte";
     import type { APIResponse, CheckReturn, Ticket } from "$lib";
+    import { slide } from "svelte/transition";
 
     let data: Awaited<APIResponse<CheckReturn<Ticket>>> = null;
 
@@ -56,8 +57,10 @@
     </div>
 
     {#if data}
-        <button on:click={buttonCallback} class="info"
-            >{data === null ? "Scan" : "OK"}</button
+        <button
+            transition:slide={{ delay: 100 }}
+            on:click={buttonCallback}
+            class="info">{data === null ? "Scan" : "OK"}</button
         >
     {/if}
 </div>

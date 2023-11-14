@@ -1,28 +1,24 @@
 import { redirect } from '@sveltejs/kit';
-
+import jwt, { type JwtPayload } from "jsonwebtoken"
 export async function handle({ event, resolve }) {
     if (event.url.pathname.startsWith('/node_modules/')) {
         return new Response(null);
     }
 
-    // if (!(event.url.pathname === "/")) {
-    //     if (!event.cookies.get("passcode"))
-    //         return new Response(null, {
-    //             status: 302,
-    //             headers: new Headers({ Location: "/" })
-    //         })
-    // }
 
-    // else if (event.url.pathname === "/") {
-    //     const passcode = event.cookies.get("passcode") || ""
+    if (event.url.pathname !== "/") {
+        const pcookie = event.cookies.get("passcode") || ""
+        if (!pcookie) throw redirect(303, "/")
 
-    //     if (passcode === import.meta.env.VITE_PASSCODE) {
-    //         return new Response(null, {
-    //             status: 302,
-    //             headers: new Headers({ Location: "/check-in" })
-    //         })
-    //     }
-    // }
+        const token = jwt.verify(pcookie, import.meta.env.VITE_SECRET) as JwtPayload
+        const data = token?.data
+        const passcode = data?.passcode
+
+        if (passcode !== import.meta.env.VITE_PASSCODE) {
+            throw redirect(303, "/")
+        }
+
+    }
 
     const response = await resolve(event);
     return response;

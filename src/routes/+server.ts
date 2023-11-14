@@ -1,31 +1,37 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import cookie from "cookie"
+import jwt from "jsonwebtoken"
+
 export const POST: RequestHandler = async ({ cookies, request, }) => {
 
     try {
-        const passcode = request.headers.get("passcode") || ""
+        let data = request.headers.get("passcode") || ""
+        data = atob(data)
+        const obj = JSON.parse(data)
+        const passcode = atob(obj.passcode)
+
         if (passcode === import.meta.env.VITE_PASSCODE) {
-            cookies.set("passcode", passcode!, {
-                path: "/",
-            })
+            const token = jwt.sign({
+                data: { passcode: import.meta.env.VITE_PASSCODE, since: Date.now() }
+            }, import.meta.env.VITE_SECRET, {});
 
-            const r = new Response(null, {
-                status: 301,
-                headers: new Headers({
-                    Location: "/check-in", "Set-Cookie": cookie.serialize("passcode", passcode, {
-                        httpOnly: true,
-                        maxAge: 60 * 60 * 24 * 30
+            cookies.set("passcode", token)
 
-                    })
-                })
-            })
-            return r
+            return new Response(JSON.stringify({ status: "Success" }), {
+                status: 302,
+                statusText: "/check-in",
+                headers: {
+                    Location: "/check-in"
+                }
+            });
+
         }
-        return new Response(JSON.stringify({ status: import.meta.env.VITE_PASSCODE }));
+        return new Response(JSON.stringify({ status: "Invalid Passcode" }));
 
     } catch (error) {
         console.log(error)
     }
 
-    return new Response(JSON.stringify({ status: import.meta.env.VITE_PASSCODE }));
+    return new Response(JSON.stringify({ status: "Invalid Passcode" }));
 }
+
+

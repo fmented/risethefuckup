@@ -3,6 +3,7 @@
     import Header from "$lib/Header.svelte";
     import ErrorDisplayer from "$lib/ErrorDisplayer.svelte";
     import type { Ticket } from "$lib";
+    import { slide } from "svelte/transition";
 
     export let data: Ticket | null = null;
 
@@ -43,7 +44,11 @@
     </div>
 
     {#if data}
-        <a href="/api/v1/ticketpdf/{data.id}" class="info">Download PDF</a>
+        <a
+            transition:slide={{ delay: 300 }}
+            href="/api/v1/ticketpdf/{data.id}"
+            class="info">Download PDF</a
+        >
     {/if}
 </div>
 

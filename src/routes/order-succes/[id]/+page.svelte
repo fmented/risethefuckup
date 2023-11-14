@@ -3,6 +3,7 @@
     import Header from "$lib/Header.svelte";
     import ErrorDisplayer from "$lib/ErrorDisplayer.svelte";
     import type { Merch } from "$lib";
+    import { slide } from "svelte/transition";
 
     export let data: Merch | null = null;
 
@@ -46,7 +47,11 @@
     </div>
 
     {#if data}
-        <a href="/api/v1/merchpdf/{data.id}" class="info">Download PDF</a>
+        <a
+            transition:slide={{ delay: 300 }}
+            href="/api/v1/merchpdf/{data.id}"
+            class="info">Download PDF</a
+        >
     {/if}
 </div>
 

@@ -1,30 +1,47 @@
-<!-- <script lang="ts">
+<script lang="ts">
     let passcode = "";
+    let error = "";
+    import { slide } from "svelte/transition";
+    const redirectif = [0, 300, 301, 302, 303];
 
-    function setPasscode() {
+    async function setPasscode() {
         if (!passcode) return;
-        window
-            .fetch(window.location.href, {
-                method: "POST",
-                headers: {
-                    passcode,
-                },
-            })
-            .then((res) => {
-                if (res.ok) {
-                    window.location.pathname = "/check-in";
-                }
-            });
+        const data = JSON.stringify({
+            passcode: btoa(passcode),
+            date: Date.now(),
+        });
+
+        const res = await window.fetch(window.location.href, {
+            method: "POST",
+            headers: {
+                passcode: btoa(data),
+            },
+            redirect: "manual",
+        });
+
+        if (redirectif.includes(res.status)) {
+            window.location.pathname = res.statusText;
+        }
+
+        const message = (await res.json()) || { status: "" };
+        error = message.status;
+
+        setTimeout(() => (error = ""), 3000);
     }
 </script>
 
 <form>
+    {#if error}
+        <strong class="error" transition:slide>{error}</strong>
+    {/if}
     <div>
         <label for="passcode">Passcode</label>
         <input type="text" bind:value={passcode} id="passcode" />
     </div>
     {#if passcode}
-        <button class="info" on:click={setPasscode}>Check Passcode</button>
+        <button transition:slide class="info" on:click={setPasscode}
+            >Check Passcode</button
+        >
     {/if}
 </form>
 
@@ -41,6 +58,11 @@
         color: black;
     }
 
+    strong {
+        text-align: center;
+        padding: 1em;
+    }
+
     div {
         display: flex;
         justify-content: space-between;
@@ -48,6 +70,7 @@
         align-items: center;
         font-size: large;
         padding: 1rem;
+        margin-top: 2rem;
     }
 
     form {
@@ -77,4 +100,4 @@
             display: none;
         }
     }
-</style> -->
+</style>

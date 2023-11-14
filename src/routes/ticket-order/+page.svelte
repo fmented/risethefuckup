@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Merch } from "$lib";
     import Header from "$lib/Header.svelte";
+    import { slide } from "svelte/transition";
 
     let name = "";
 
@@ -36,9 +37,9 @@
                 <input type="text" bind:value={name} id="name" />
             </div>
             {#if good}
-                <div>
-                    <button class="info" on:click={order}>Order</button>
-                </div>
+                <button class="info" transition:slide on:click={order}
+                    >Order</button
+                >
             {/if}
         </form>
     </div>
