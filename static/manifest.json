@@ -1,7 +1,7 @@
 {
     "short_name": "RTFU",
     "name": "Rise The Fuck Up",
-    "display": "fullscreen",
+    "display": "standalone",
     "start_url": "/check-in",
     "scope": "/",
     "icons": [
