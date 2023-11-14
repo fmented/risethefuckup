@@ -28,6 +28,8 @@
         gap: 2em;
         align-items: center;
         font-size: large;
+        background-color: #555;
+        padding: 0.5rem;
     }
 
     form {

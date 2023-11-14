@@ -8,7 +8,10 @@
 
     async function buttonCallback() {
         if (!data) return;
-        window.location.pathname = "/api/v1/merchpdf/" + data.qr;
+        const link = document.createElement("a");
+        link.setAttribute("download", "ticket " + data.name + ".pdf");
+        link.setAttribute("href", "/api/v1/merchpdf/" + data.qr);
+        link.click();
     }
 </script>
 
@@ -43,7 +46,7 @@
     </div>
 
     {#if data}
-        <button on:click={buttonCallback} class="info">{"PRINT"}</button>
+        <button on:click={buttonCallback} class="info">Download PDF</button>
     {/if}
 </div>
 

@@ -37,7 +37,11 @@
                 <tbody>
                     {#each data?.merchs || [] as r}
                         <tr>
-                            <td><a href="/api/v1/merchpdf/{r.qr}">{r.id}</a></td
+                            <td
+                                ><a
+                                    href="/api/v1/merchpdf/{r.qr}"
+                                    download="receipt {r.name}.pdf">{r.id}</a
+                                ></td
                             >
                             <td>{r.name}</td>
                             <td>{r.size}</td>
@@ -68,7 +72,9 @@
                     {#each data?.tickets || [] as r}
                         <tr>
                             <td
-                                ><a href="/api/v1/ticketpdf/{r.qr}">{r.id}</a
+                                ><a
+                                    href="/api/v1/ticketpdf/{r.qr}"
+                                    download="ticket {r.name}.pdf">{r.id}</a
                                 ></td
                             >
                             <td>{r.name}</td>
