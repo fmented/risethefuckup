@@ -12,30 +12,24 @@
     <a
         href="/check-in"
         class:active-link={location?.pathname == "/check-in"}
-        rel="external">Masuk</a
+        rel="external">CHECK IN</a
     >
     <a
         href="/claim"
         class:active-link={location?.pathname == "/claim"}
-        rel="external">Redeem</a
+        rel="external">REDEEM</a
     >
 
     <a
         href="/stats"
         class:active-link={location?.pathname.startsWith("/stats")}
-        rel="external">Stats</a
+        rel="external">STATS</a
     >
 
     <a
         href="/ticket-order"
         class:active-link={location?.pathname.startsWith("/ticket")}
-        rel="external">Ticket</a
-    >
-
-    <a
-        href="/order"
-        class:active-link={location?.pathname.startsWith("/order")}
-        rel="external">Merch</a
+        rel="external">ORDER</a
     >
 </div>
 
@@ -43,6 +37,7 @@
     a {
         color: #ed7;
         padding: 0.5em;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
     .links {

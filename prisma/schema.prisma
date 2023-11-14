@@ -23,6 +23,7 @@ model Ticket {
   name      String?
   id        String    @unique @default(uuid())
   createdAt DateTime  @default(now())
+  Merch     Merch?
 
   @@index([qr, id])
 }
@@ -44,6 +45,8 @@ model Merch {
   claimedAt DateTime?
   createdAt DateTime  @default(now())
   id        String    @unique @default(uuid())
+  ticketId  String    @unique
+  ticket    Ticket    @relation(fields: [ticketId], references: [id])
 
-  @@index([qr, id])
+  @@index([qr, id, ticketId])
 }

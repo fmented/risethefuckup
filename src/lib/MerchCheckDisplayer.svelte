@@ -88,6 +88,7 @@
         font-weight: bold;
         font-size: 16px;
         color: black;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
     img {
@@ -115,6 +116,10 @@
         gap: 2em;
         background-color: #555;
         padding-bottom: 4rem;
+    }
+
+    label {
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
     @media print {

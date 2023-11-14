@@ -1,10 +1,11 @@
 import { PrismaClient, type Ticket as T, type Merch as M, MerchSize } from '@prisma/client'
 import { randomBytes } from 'crypto'
-import blobstream, { type IBlobStream } from "blob-stream"
+import blobstream from "blob-stream"
 const prisma = new PrismaClient()
 import pdf from "pdfkit"
 import QRCode from "qrcode-svg"
 import s2p from "svg-to-pdfkit"
+import { receiptNotes, ticketNotes } from '$lib/notes'
 
 function dataUrItoBlob(dataUri: string) {
   var binary = atob(dataUri.split(',')[1]);
@@ -309,33 +310,49 @@ const page = {
   margin: 25
 }
 
-export async function generateReceipt(data: {
-  name: string, qr: string, size: MerchSize | string | number, id: string
-}): Promise<Blob> {
+export async function generateReceipt(data: Merch & { ticket: Ticket }): Promise<Blob> {
   const font = await fontBlob.arrayBuffer()
   return new Promise((res, rej) => {
     const stream = blobstream()
     const p = new pdf({ layout: "landscape", size: [page.width, page.height], margin: page.margin })
     p.pipe(stream)
+    s2p(p, ticketSVG(data.ticket.qr), page.margin, -175, {
+      width: page.height - page.margin * 2
+    })
+    p.fontSize(48)
+      .font(font)
+      .text("E-Tiket Rise The Fuck Up", { align: "center" })
+      .moveDown(4)
+      .fontSize(28)
+      .text(`                                Name       : ${(data.ticket.name || "No name").toUpperCase()}`)
+      .text(`                                TicketID  : ${data.ticket.id}`)
+      .moveDown(2)
+      .fontSize(24)
+      .text("[ Note ]")
+      .text("")
+    for (const note of ticketNotes) {
+      p.text(`- ${note}`)
+    }
+    p.addPage()
     s2p(p, receiptSVG(data.qr), page.margin, -175, {
       width: page.height - page.margin * 2
     })
     p.fontSize(48)
-    p.font(font)
-    p.text("Merch Receipt Rise The Fuck Up", { align: "center" })
-    p.moveDown(4)
-    p.fontSize(28)
-    p.text(`                                Name          : ${data.name.toUpperCase()}`)
-    p.text(`                                Size             : ${data.size}`)
-    p.text(`                                ReceiptID  : ${data.id}`)
-    p.moveDown(2)
-    p.fontSize(24)
-    p.text("[ Note ]")
-    p.text("")
-    p.text("- Simpan receipt ini untuk penukaran merchandise.")
-    p.text("- Jangan berikan receipt ini kepada siapapun sebelum menukarkan merchandise.")
-    p.text("- Ukuran yang sudah dipesan tidak dapat dirubah.")
-    p.text("- Penukaran merchandise bisa dilakukan di venue atau bisa juga menghubungi CP kami.")
+      .font(font)
+      .text("Merch Receipt Rise The Fuck Up", { align: "center" })
+      .moveDown(4)
+      .fontSize(28)
+      .text(`                                Name          : ${data.name.toUpperCase()}`)
+      .text(`                                Size             : ${data.size}`)
+      .text(`                                ReceiptID  : ${data.id}`)
+      .moveDown(2)
+      .fontSize(24)
+      .text("[ Note ]")
+      .text("")
+    for (const note of receiptNotes) {
+      p.text(`- ${note}`)
+    }
+
     p.end()
     stream.on("finish", () => {
       res(stream.toBlob('application/pdf'))
@@ -7434,21 +7451,20 @@ export async function generateTicket(data: { name: string | null, qr: string, id
       width: page.height - page.margin * 2
     })
     p.fontSize(48)
-    p.font(font)
+      .font(font)
+      .text("E-Tiket Rise The Fuck Up", { align: "center" })
+      .moveDown(4)
+      .fontSize(28)
+      .text(`                                Name       : ${(data.name || "No name").toUpperCase()}`)
+      .text(`                                TicketID  : ${data.id}`)
+      .moveDown(2)
+      .fontSize(24)
+      .text("[ Note ]")
+      .text("")
+    for (const note of ticketNotes) {
+      p.text(`- ${note}`)
+    }
 
-    p.text("E-Tiket Rise The Fuck Up", { align: "center" })
-    p.moveDown(4)
-    p.fontSize(28)
-    p.text(`                                Name       : ${(data.name || "No name").toUpperCase()}`)
-    p.text(`                                TicketID  : ${data.id}`)
-    p.moveDown(2)
-    p.fontSize(24)
-    p.text("[ Note ]")
-    p.text("")
-    p.text("- Simpan kode QR ini untuk memasuki venue.")
-    p.text("- Satu tiket berlaku untuk satu orang.")
-    p.text("- Jangan berikan kode QR ini kepada siapapun sebelum memasuki venue.")
-    p.text("- Satu tiket hanya berlaku untuk satu kali masuk.")
     p.end()
 
     stream.on("finish", () => {

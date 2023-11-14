@@ -4,25 +4,34 @@
     import { slide } from "svelte/transition";
 
     let name = "";
+    let bundling = false;
+    let size = "";
+    const sizes = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
-    $: good = name;
+    $: good = bundling ? name && size : name;
 
     function order() {
         if (!name) return;
         window
-            .fetch(`/api/v1/order-ticket`, {
-                body: JSON.stringify({
-                    name,
-                }),
-                method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                    passcode: localStorage.getItem("passcode") || "",
-                },
-            })
+            .fetch(
+                bundling ? "/api/v1/order-bundling" : `/api/v1/order-ticket`,
+                {
+                    body: JSON.stringify({
+                        name,
+                        size,
+                    }),
+                    method: "POST",
+                    headers: {
+                        "content-type": "application/json",
+                        passcode: localStorage.getItem("passcode") || "",
+                    },
+                }
+            )
             .then((res) => {
-                res.json().then((v: Merch) => {
-                    window.location.pathname = "/ticket-order-success/" + v.id;
+                res.json().then((v) => {
+                    window.location.pathname = bundling
+                        ? `/api/v1/bundlingpdf/${v.id}`
+                        : `/api/v1/ticketpdf/${v.id}`;
                 });
             });
     }
@@ -32,10 +41,26 @@
     <Header />
     <div class="main">
         <form>
-            <div>
+            <div class="in">
                 <label for="name">Name</label>
                 <input type="text" bind:value={name} id="name" />
             </div>
+            <div class="cb">
+                <label for="bundling">Bundling</label>
+                <input type="checkbox" bind:checked={bundling} id="bundling" />
+            </div>
+            {#if bundling}
+                <div class="in">
+                    <label for="size">Size</label>
+                    <select name="size" id="size" bind:value={size}>
+                        <option value="" disabled>Select Size</option>
+                        {#each sizes as s}
+                            <option value={s}>{s}</option>
+                        {/each}
+                    </select>
+                </div>
+            {/if}
+
             {#if good}
                 <button class="info" transition:slide on:click={order}
                     >Order</button
@@ -64,22 +89,39 @@
         background-repeat: no-repeat;
     }
 
-    input {
+    input,
+    select {
         width: calc(calc(100vw - 18ch) - 2em);
         padding: 1em;
         border-radius: 0.25em;
         font-weight: bold;
         font-size: 16px;
         color: black;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
-    form > div {
+    form > .in {
         display: flex;
         justify-content: space-between;
         gap: 2em;
         align-items: center;
         font-size: large;
         padding: 1rem;
+    }
+
+    [type="checkbox"] {
+        width: auto;
+        padding: 2em;
+    }
+
+    form > .cb {
+        display: flex;
+        justify-content: space-between;
+        gap: 2em;
+        align-items: center;
+        font-size: large;
+        padding: 1rem;
+        justify-content: start;
     }
 
     form {
@@ -102,6 +144,10 @@
     button {
         font-size: 16px;
         padding: 2em;
+    }
+
+    label {
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
     @media print {

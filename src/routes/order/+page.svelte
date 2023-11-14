@@ -25,7 +25,7 @@
             })
             .then((res) => {
                 res.json().then((v: Merch) => {
-                    window.location.pathname = "/order-succes/" + v.id;
+                    window.location.pathname = "/api/v1/merchpdf/" + v.id;
                 });
             });
     }
@@ -84,6 +84,7 @@
         font-weight: bold;
         font-size: 16px;
         color: black;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
     form > div {
@@ -115,6 +116,10 @@
     button {
         font-size: 16px;
         padding: 2em;
+    }
+
+    label {
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
     @media print {

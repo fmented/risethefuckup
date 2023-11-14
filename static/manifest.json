@@ -2,7 +2,7 @@
     "short_name": "RTFU",
     "name": "Rise The Fuck Up",
     "display": "standalone",
-    "start_url": "/check-in",
+    "start_url": "/ticket-order",
     "scope": "/",
     "icons": [
         {

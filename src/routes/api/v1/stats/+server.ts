@@ -4,12 +4,8 @@ import type { RequestHandler } from '@sveltejs/kit';
 export const GET: RequestHandler = async ({ request, cookies }) => {
 
     try {
-        const merchs = await model.merch.findMany()
-        const tickets = await model.ticket.findMany()
-        merchs.reverse()
-        tickets.reverse()
-
-        return new Response(JSON.stringify({ merchs, tickets }));
+        const tickets = await model.ticket.findMany({ include: { Merch: true }, orderBy: { createdAt: "desc" } })
+        return new Response(JSON.stringify({ tickets }));
     } catch (error) {
         console.log(error)
     }

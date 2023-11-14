@@ -2,8 +2,7 @@
     import type { Merch, Ticket } from "$lib";
     import Header from "$lib/Header.svelte";
 
-    export let data: { merchs: Merch[]; tickets: Ticket[] } = {
-        merchs: [],
+    export let data: { tickets: (Ticket & { Merch: Merch | null })[] } = {
         tickets: [],
     };
 
@@ -21,8 +20,8 @@
 <div class="fuck">
     <Header />
     <div class="main">
-        <div>
-            <h1>Merch</h1>
+        <!-- <div>
+            <h1>Bundling</h1>
             <small>{data?.merchs?.length || 0} Rows</small>
             <table>
                 <thead>
@@ -37,7 +36,9 @@
                 <tbody>
                     {#each data?.merchs || [] as r}
                         <tr>
-                            <td><a href="/api/v1/merchpdf/{r.id}">{r.id}</a></td
+                            <td
+                                ><a href="/api/v1/bundlingpdf/{r.id}">{r.id}</a
+                                ></td
                             >
                             <td>{r.name}</td>
                             <td>{r.size}</td>
@@ -51,7 +52,7 @@
                     {/each}
                 </tbody>
             </table>
-        </div>
+        </div> -->
         <div>
             <h1>Ticket</h1>
             <small>{data?.tickets?.length || 0} Rows</small>
@@ -60,18 +61,23 @@
                     <tr>
                         <th>ID</th>
                         <th>Name</th>
+                        <th>Merch</th>
                         <th>Checked-In At</th>
                         <th>Valid</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {#each data?.tickets || [] as r}
+                    {#each data.tickets || [] as r}
                         <tr>
                             <td
-                                ><a href="/api/v1/ticketpdf/{r.id}">{r.id}</a
+                                ><a
+                                    href={r.Merch
+                                        ? `/api/v1/bundlingpdf/${r.Merch.id}`
+                                        : `/api/v1/ticketpdf/${r.id}`}>{r.id}</a
                                 ></td
                             >
                             <td>{r.name}</td>
+                            <td>{r.Merch?.size ? r.Merch.size : "-"}</td>
                             <td
                                 >{r.checkInAt
                                     ? f.format(new Date(r.checkInAt))
@@ -95,6 +101,7 @@
     th {
         border: 2px solid #ed7;
         text-align: center;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
     small {

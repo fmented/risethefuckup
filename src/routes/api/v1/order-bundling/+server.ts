@@ -7,7 +7,17 @@ export const POST: RequestHandler = async ({ request }) => {
     try {
         const data: { name: string, size: MerchSize } = await request.json()
         const merch = await model.merch.create({
-            data: { ...data, qr: qr() }
+            data: {
+                name: data.name,
+                size: data.size,
+                qr: qr(),
+                ticket: {
+                    create: {
+                        qr: qr(),
+                        name: data.name
+                    }
+                }
+            }
         })
 
         return new Response(merch ? JSON.stringify(merch) : JSON.stringify({ error: "Unknown QrCode" }));
