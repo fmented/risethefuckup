@@ -8,7 +8,7 @@
 
     async function buttonCallback() {
         if (!data) return;
-        window.location.pathname = "/api/v1/merchpdf" + data.qr;
+        window.location.pathname = "/api/v1/merchpdf/" + data.qr;
     }
 </script>
 

@@ -8,7 +8,7 @@
 
     async function buttonCallback() {
         if (!data) return;
-        window.location.pathname = "/api/v1/ticketpdf" + data.qr;
+        window.location.pathname = "/api/v1/ticketpdf/" + data.qr;
     }
 </script>
 
