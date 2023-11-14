@@ -21,10 +21,10 @@ model Ticket {
   qr        String    @id @unique
   checkInAt DateTime?
   name      String?
-  id        String    @default(uuid())
+  id        String    @unique @default(uuid())
   createdAt DateTime  @default(now())
 
-  @@index([qr])
+  @@index([qr, id])
 }
 
 enum MerchSize {
@@ -43,7 +43,7 @@ model Merch {
   name      String
   claimedAt DateTime?
   createdAt DateTime  @default(now())
-  id        String    @default(uuid())
+  id        String    @unique @default(uuid())
 
-  @@index([qr])
+  @@index([qr, id])
 }

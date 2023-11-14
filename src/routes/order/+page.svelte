@@ -24,7 +24,7 @@
             })
             .then((res) => {
                 res.json().then((v: Merch) => {
-                    window.location.pathname = "/order-succes/" + v.qr;
+                    window.location.pathname = "/order-succes/" + v.id;
                 });
             });
     }

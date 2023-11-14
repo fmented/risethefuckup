@@ -37,11 +37,7 @@
                 <tbody>
                     {#each data?.merchs || [] as r}
                         <tr>
-                            <td
-                                ><a
-                                    href="/api/v1/merchpdf/{r.qr}"
-                                    download="receipt {r.name}.pdf">{r.id}</a
-                                ></td
+                            <td><a href="/api/v1/merchpdf/{r.id}">{r.id}</a></td
                             >
                             <td>{r.name}</td>
                             <td>{r.size}</td>
@@ -72,9 +68,7 @@
                     {#each data?.tickets || [] as r}
                         <tr>
                             <td
-                                ><a
-                                    href="/api/v1/ticketpdf/{r.qr}"
-                                    download="ticket {r.name}.pdf">{r.id}</a
+                                ><a href="/api/v1/ticketpdf/{r.id}">{r.id}</a
                                 ></td
                             >
                             <td>{r.name}</td>
@@ -91,9 +85,9 @@
         </div>
     </div>
 
-    {#if data}
+    <!-- {#if data}
         <button on:click={buttonCallback} class="info">{"PRINT"}</button>
-    {/if}
+    {/if} -->
 </div>
 
 <style>
@@ -147,7 +141,7 @@
         padding-bottom: 6rem;
     }
 
-    button {
+    /* button {
         position: fixed;
         bottom: 0;
         left: 0;
@@ -157,7 +151,7 @@
     button {
         font-size: 16px;
         padding: 2em;
-    }
+    } */
 
     @media print {
         * {
@@ -169,8 +163,8 @@
             border: 2px solid black;
         }
 
-        button {
+        /* button {
             display: none;
-        }
+        } */
     }
 </style>

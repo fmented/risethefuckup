@@ -6,8 +6,9 @@ export async function load({ params, fetch }) {
         headers: {
             "content-type": "application/json",
         },
-        body: JSON.stringify({ qr: params.id })
+        body: JSON.stringify({ id: params.id })
     })
+
 
     return await merch.json()
 }

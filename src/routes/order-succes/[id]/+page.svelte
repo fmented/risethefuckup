@@ -8,10 +8,10 @@
 
     async function buttonCallback() {
         if (!data) return;
-        const link = document.createElement("a");
-        link.setAttribute("download", "ticket " + data.name + ".pdf");
-        link.setAttribute("href", "/api/v1/merchpdf/" + data.qr);
-        link.click();
+        // const link = document.createElement("a");
+        // link.setAttribute("download", "receipt " + data.name + ".pdf");
+        // link.setAttribute("href", "/api/v1/merchpdf/" + data.qr);
+        // link.click();
     }
 </script>
 
@@ -46,7 +46,7 @@
     </div>
 
     {#if data}
-        <button on:click={buttonCallback} class="info">Download PDF</button>
+        <a href="/api/v1/merchpdf/{data.id}" class="info">Download PDF</a>
     {/if}
 </div>
 
@@ -58,6 +58,13 @@
         color: #ed7;
         background: url($lib/favicon2.png);
         background: #555;
+    }
+
+    a {
+        text-decoration: none;
+        text-align: center;
+        font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+            "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
     }
 
     .h1,
@@ -75,20 +82,20 @@
         background-repeat: no-repeat;
     }
 
-    button {
+    a {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
     }
 
-    button {
+    a {
         font-size: 16px;
         padding: 2em;
     }
 
     @media print {
-        button {
+        a {
             display: none;
         }
 

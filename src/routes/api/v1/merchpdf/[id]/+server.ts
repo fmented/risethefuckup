@@ -3,8 +3,8 @@ import type { RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ request, cookies, params }) => {
     try {
-        const qr = params.id
-        const merch = await model.merch.findUnique({ where: { qr } })
+        const id = params.id
+        const merch = await model.merch.findUnique({ where: { id } })
         if (merch == null || typeof merch?.name !== "string")
             return new Response(JSON.stringify({ error: "Unknown QrCode" }));
 
