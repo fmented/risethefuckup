@@ -343,7 +343,7 @@
         left: 0;
         right: 0;
         text-align: center;
-        font-family: Verdana, Geneva, Tahoma, sans-serif;
+        font-family: Verdana, Tahoma, sans-serif;
     }
 
     button,
