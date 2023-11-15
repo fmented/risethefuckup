@@ -3,6 +3,7 @@
     import Header from "$lib/Header.svelte";
     import { onMount } from "svelte";
     import { generateReceipt, generateTicket } from "$lib";
+    import FileSaver from "file-saver";
 
     function blob2uri(b: Blob): Promise<string> {
         return new Promise((res) => {
@@ -40,15 +41,59 @@
     async function click(d: (typeof data)["tickets"][0]) {
         loading = true;
         text = "Preparing PDF for download";
+        let blob = d.Merch
+            ? await generateReceipt({ ...d.Merch, ticket: d }, pdf)
+            : await generateTicket(d, pdf);
+
+        text = "Download is starting";
+        FileSaver.saveAs(blob, `${d.name}_${d.id}.pdf`, { autoBom: false });
+        setTimeout(() => {
+            loading = false;
+        }, 1000);
+    }
+
+    async function sendEmail(
+        data: Ticket & { Merch: (Merch & { ticket: Ticket }) | null },
+        pdf: string
+    ) {
+        return await (
+            await fetch(
+                data.Merch
+                    ? "/api/v1/bundlingpdf/" + data.id + "/send"
+                    : `/api/v1/ticketpdf/` + data.id + "/send",
+                {
+                    body: JSON.stringify({
+                        name: data.name,
+                        to: data.email,
+                        pdf: pdf,
+                    }),
+                    method: "POST",
+                    headers: {
+                        "content-type": "application/json",
+                    },
+                }
+            )
+        ).json();
+    }
+
+    async function resend(d: (typeof data)["tickets"][0]) {
+        loading = true;
+        text = "Preparing PDF";
         const blob = d.Merch
-            ? await generateReceipt(d.Merch, pdf)
+            ? await generateReceipt({ ...d.Merch, ticket: d }, pdf)
             : await generateTicket(d, pdf);
         const uri = await blob2uri(blob);
-        const a = document.createElement("a");
-        a.download = d.name;
-        a.href = uri;
-        a.click();
-        text = "Download is starting";
+
+        text = "Re-sending PDF to " + d.email;
+
+        const { status } = await sendEmail(d, uri);
+
+        if (status && status == "Success") {
+            text = "Done re-sending PDF";
+        } else {
+            text = "Couldn't re-send PDF";
+        }
+
         setTimeout(() => {
             loading = false;
         }, 1000);
@@ -105,26 +150,25 @@
                     <tr>
                         <th>ID</th>
                         <th>Name</th>
+                        <th>Email</th>
                         <th>Merch</th>
-                        <th>Checked-In At</th>
-                        <th>Valid</th>
+                        <!-- <th>Valid</th> -->
                     </tr>
                 </thead>
                 <tbody>
                     {#each data.tickets || [] as r}
                         <tr>
-                            <td>
-                                <span on:pointerup={() => click(r)}>{r.id}</span
-                                ></td
+                            <td on:contextmenu|preventDefault={() => click(r)}>
+                                <span>{r.id}</span></td
                             >
                             <td>{r.name}</td>
-                            <td>{r.Merch?.size ? r.Merch.size : "-"}</td>
                             <td
-                                >{r.checkInAt
-                                    ? f.format(new Date(r.checkInAt))
-                                    : "-"}</td
+                                on:contextmenu|preventDefault={() => resend(r)}
+                                style="word-break: break-all;"
+                                ><span>{r.email}</span></td
                             >
-                            <td>{r.valid ? "✔️" : "❌"}</td>
+                            <td>{r.Merch?.size ? r.Merch.size : "-"}</td>
+                            <!-- <td>{r.valid ? "✔️" : "❌"}</td> -->
                         </tr>
                     {/each}
                 </tbody>
@@ -151,12 +195,21 @@
         font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
+    td {
+        max-width: calc(99vw - 2rem);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: smaller;
+    }
+
     small {
         margin-bottom: 0.5rem;
     }
 
     span {
         cursor: pointer;
+        user-select: none;
     }
 
     td {
@@ -174,8 +227,7 @@
         border-collapse: collapse;
     }
 
-    .fuck,
-    a {
+    .fuck {
         display: grid;
         height: 100%;
         grid-template-rows: auto 1fr;
