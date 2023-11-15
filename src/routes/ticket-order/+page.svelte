@@ -213,18 +213,18 @@
     <div class="main">
         <form>
             {#if loading}
-                {#if process}
-                    <div class="in">
-                        <label for="process">Process</label>
-                        <input type="text" value={process} id="process" />
-                    </div>
-                {/if}
                 {#each messages as e, i}
                     <div class="in">
                         <label for="error-{i}">Status</label>
                         <input type="text" value={e} id="error-{i}" />
                     </div>
                 {/each}
+                {#if process}
+                    <div class="in">
+                        <label for="process">Process</label>
+                        <input type="text" value={process} id="process" />
+                    </div>
+                {/if}
                 {#if link}
                     <a
                         href={link}
