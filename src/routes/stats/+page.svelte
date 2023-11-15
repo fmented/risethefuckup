@@ -39,6 +39,7 @@
     };
 
     async function click(d: (typeof data)["tickets"][0]) {
+        if (pdf == undefined) return;
         loading = true;
         text = "Preparing PDF for download";
         let blob = d.Merch
@@ -77,6 +78,7 @@
     }
 
     async function resend(d: (typeof data)["tickets"][0]) {
+        if (pdf == undefined) return;
         loading = true;
         text = "Preparing PDF";
         const blob = d.Merch
