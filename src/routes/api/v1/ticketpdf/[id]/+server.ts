@@ -12,8 +12,8 @@ export const GET: RequestHandler = async ({ request, url, params, fetch }) => {
         const b = await generateTicket(ticket)
         const arrayBuff = await b.arrayBuffer()
 
-        // if (!send)
-        //     return new Response(arrayBuff);
+        if (send)
+            return new Response(arrayBuff);
 
         const buff = Buffer.from(arrayBuff)
         const base64string = `data:application/pdf;base64,${buff.toString("base64")}`

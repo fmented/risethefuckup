@@ -7500,7 +7500,7 @@ export async function sendMail({ to, name, base64string, as = "e-Ticket" }: { to
 
         See you at the venue.
         `,
-    html: `<h1>Hi Fauky,<h1><br/>
+    html: `<h1>Hi ${name},<h1><br/>
     <p>Lampiran dibawah ini adalah ${as} ${import.meta.env.VITE_EVENT_NAME} kamu</p>
         <strong>Kami sarankan untuk tidak menunjukkan ${as} anda kepada siapapun sebelum acara.</strong>
         <br/>
