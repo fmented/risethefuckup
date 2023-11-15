@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ fetch, cookies, params, request, url
         const buff = Buffer.from(arrayBuff)
         const base64string = `data:application/pdf;base64,${buff.toString("base64")}`
 
-        fetch(`/api/v1/bundlingpdf/${id}/send`, {
+        await fetch(`/api/v1/bundlingpdf/${id}/send`, {
             method: "POST",
             body: JSON.stringify({
                 to: merch.ticket.email,
