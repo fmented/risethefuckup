@@ -1,13 +1,57 @@
 <script lang="ts">
     import type { Merch, Ticket } from "$lib";
     import Header from "$lib/Header.svelte";
+    import { onMount } from "svelte";
+    import { generateReceipt, generateTicket } from "$lib";
 
-    export let data: { tickets: (Ticket & { Merch: Merch | null })[] } = {
+    function blob2uri(b: Blob): Promise<string> {
+        return new Promise((res) => {
+            const reader = new FileReader();
+            reader.onloadend = function () {
+                var base64data = reader.result;
+                res(base64data as string);
+            };
+            reader.readAsDataURL(b);
+        });
+    }
+
+    interface GW {
+        PDFDocument: PDFKit.PDFDocument;
+    }
+
+    let w: GW & typeof window;
+    let pdf: PDFKit.PDFDocument;
+
+    let loading = false;
+
+    let text: string = "";
+
+    onMount(() => {
+        w = window as GW & typeof window;
+        pdf = w.PDFDocument;
+    });
+
+    export let data: {
+        tickets: (Ticket & { Merch: (Merch & { ticket: Ticket }) | null })[];
+    } = {
         tickets: [],
     };
 
-    function buttonCallback() {
-        window.print();
+    async function click(d: (typeof data)["tickets"][0]) {
+        loading = true;
+        text = "Preparing PDF for download";
+        const blob = d.Merch
+            ? await generateReceipt(d.Merch, pdf)
+            : await generateTicket(d, pdf);
+        const uri = await blob2uri(blob);
+        const a = document.createElement("a");
+        a.download = d.name;
+        a.href = uri;
+        a.click();
+        text = "Download is starting";
+        setTimeout(() => {
+            loading = false;
+        }, 1000);
     }
 
     const f = Intl.DateTimeFormat("id", {
@@ -70,11 +114,7 @@
                     {#each data.tickets || [] as r}
                         <tr>
                             <td>
-                                <a
-                                    href={r.Merch
-                                        ? `/api/v1/bundlingpdf/${r.Merch.id}?send=true`
-                                        : `/api/v1/ticketpdf/${r.id}?send=true`}
-                                    >{r.id}</a
+                                <span on:pointerup={() => click(r)}>{r.id}</span
                                 ></td
                             >
                             <td>{r.name}</td>
@@ -93,9 +133,15 @@
     </div>
 
     <!-- {#if data}
-        <button on:click={buttonCallback} class="info">{"PRINT"}</button>
+        <button class="info">{"PRINT"}</button>
     {/if} -->
 </div>
+
+{#if loading}
+    <div class="overlay">
+        <strong>{text}</strong>
+    </div>
+{/if}
 
 <style>
     td,
@@ -107,6 +153,10 @@
 
     small {
         margin-bottom: 0.5rem;
+    }
+
+    span {
+        cursor: pointer;
     }
 
     td {
@@ -147,6 +197,20 @@
         background-position-x: 50%;
         background-repeat: no-repeat;
         padding-bottom: 6rem;
+    }
+
+    .overlay {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background-color: #222a;
+        color: white;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+    }
+
+    .overlay > strong {
+        opacity: 1;
     }
 
     /* button {

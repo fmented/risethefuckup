@@ -1,7 +1,21 @@
 <script lang="ts">
-    import type { Merch } from "$lib";
+    import type { Merch, Ticket } from "@prisma/client";
     import Header from "$lib/Header.svelte";
     import { slide } from "svelte/transition";
+    import { generateReceipt, generateTicket } from "$lib";
+    import { onMount } from "svelte";
+
+    interface GW {
+        PDFDocument: PDFKit.PDFDocument;
+    }
+
+    let w: GW & typeof window;
+    let pdf: PDFKit.PDFDocument;
+
+    onMount(() => {
+        w = window as GW & typeof window;
+        pdf = w.PDFDocument;
+    });
 
     let name = "";
     let bundling = false;
@@ -13,10 +27,53 @@
     let loading = false;
 
     let link = "";
-    let id: string;
     let process = "";
 
     $: good = bundling ? name && size && email : name && email;
+
+    function blob2uri(b: Blob): Promise<string> {
+        return new Promise((res) => {
+            const reader = new FileReader();
+            reader.onloadend = function () {
+                var base64data = reader.result;
+                res(base64data as string);
+            };
+            reader.readAsDataURL(b);
+        });
+    }
+
+    async function sendEmail(
+        data:
+            | (Merch & {
+                  valid: boolean;
+                  ticket: Ticket & {
+                      valid: boolean;
+                      name: string | undefined;
+                      Merch: Merch;
+                  };
+              })
+            | (Ticket & { valid: boolean; name: string }),
+        pdf: string
+    ) {
+        return await (
+            await fetch(
+                "ticketId" in data
+                    ? "/api/v1/bundlingpdf/" + data.ticketId + "/send"
+                    : `/api/v1/ticketpdf/` + data.id + "/send",
+                {
+                    body: JSON.stringify({
+                        name,
+                        to: email,
+                        pdf: pdf,
+                    }),
+                    method: "POST",
+                    headers: {
+                        "content-type": "application/json",
+                    },
+                }
+            )
+        ).json();
+    }
 
     async function order() {
         if (!good) return;
@@ -24,7 +81,17 @@
         process = "Creating Data";
 
         try {
-            const data = await (
+            const data:
+                | (Merch & {
+                      valid: boolean;
+                      ticket: Ticket & {
+                          valid: boolean;
+                          name: string | undefined;
+                          Merch: Merch;
+                      };
+                  })
+                | (Ticket & { valid: boolean; name: string })
+                | { error: string } = await (
                 await fetch(
                     bundling
                         ? "/api/v1/order-bundling"
@@ -43,63 +110,98 @@
                 )
             ).json();
 
-            if (!data.id) return;
-
             messages = [
                 ...messages,
-                !data.id ? "Error when creating data" : "Success creating data",
+                "error" in data
+                    ? "Error when creating data"
+                    : "Done creating data",
             ];
 
-            id = data.id;
+            if ("error" in data) return;
 
             process = "Generating PDF";
 
-            const d2 = await (
-                await fetch(
-                    bundling
-                        ? "/api/v1/bundlingpdf/" + id
-                        : `/api/v1/ticketpdf/` + id
-                )
-            ).json();
+            let _pdf: string;
 
-            if (!d2.pdf) return;
+            if ("ticketId" in data && typeof data.name === "string") {
+                const blob = await generateReceipt(data, pdf);
+                _pdf = await blob2uri(blob);
+            } else {
+                const blob = await generateTicket(data, pdf);
+                _pdf = await blob2uri(blob);
+            }
 
             messages = [
                 ...messages,
-                !d2.pdf
-                    ? "Error when generating pdf"
-                    : "Success generating pdf",
+                _pdf == undefined
+                    ? "Error when generating PDF"
+                    : "Done generating pdf",
             ];
 
             process = "Sending PDF";
 
-            const d3 = await (
-                await fetch(
-                    bundling
-                        ? "/api/v1/bundlingpdf/" + data.ticketId + "/send"
-                        : `/api/v1/ticketpdf/` + id + "/send",
-                    {
-                        body: JSON.stringify({
-                            name,
-                            to: bundling
-                                ? d2.merch.ticket.email
-                                : d2.ticket.email,
-                            pdf: d2.pdf,
-                        }),
-                        method: "POST",
-                        headers: {
-                            "content-type": "application/json",
-                        },
-                    }
-                )
-            ).json();
+            const res: { status: string } = await sendEmail(data, _pdf);
 
-            if (d3.status === "Success") {
-                messages = [...messages, "Success sending pdf"];
-                link = d2.pdf;
-            } else return (messages = [...messages, "Error when sending pdf"]);
+            messages = [
+                ...messages,
+                res.status == "Failed"
+                    ? "Error when sending PDF"
+                    : "Done sending pdf",
+            ];
+
+            link = _pdf;
+
+            // id = data.id;
+
+            // process = "Generating PDF";
+
+            // const d2 = await (
+            //     await fetch(
+            //         bundling
+            //             ? "/api/v1/bundlingpdf/" + id
+            //             : `/api/v1/ticketpdf/` + id
+            //     )
+            // ).json();
+
+            //     if (!d2.pdf) return;
+
+            //     messages = [
+            //         ...messages,
+            //         !d2.pdf
+            //             ? "Error when generating pdf"
+            //             : "Success generating pdf",
+            //     ];
+
+            //     process = "Sending PDF";
+
+            // const d3 = await (
+            //     await fetch(
+            //         "ticketId" in data
+            //             ? "/api/v1/bundlingpdf/" + data.ticketId + "/send"
+            //             : `/api/v1/ticketpdf/` + id + "/send",
+            //         {
+            //             body: JSON.stringify({
+            //                 name,
+            //                 to: bundling
+            //                     ? d2.merch.ticket.email
+            //                     : d2.ticket.email,
+            //                 pdf: d2.pdf,
+            //             }),
+            //             method: "POST",
+            //             headers: {
+            //                 "content-type": "application/json",
+            //             },
+            //         }
+            //     )
+            // ).json();
+
+            //     if (d3.status === "Success") {
+            //         messages = [...messages, "Success sending pdf"];
+            //         link = d2.pdf;
+            //     } else return (messages = [...messages, "Error when sending pdf"]);
         } catch (error) {
             messages = [...messages, error as string];
+            console.error(error);
         }
 
         process = "";

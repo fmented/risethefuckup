@@ -23,13 +23,15 @@
 		"@types/svg-to-pdfkit": "^0.1.3",
 		"jsdom": "^22.1.0",
 		"nodemailer": "^6.9.7",
+		"rollup-plugin-polyfill-node": "^0.12.0",
 		"svelte": "^4.0.5",
 		"svelte-check": "^3.4.3",
 		"svg2img": "^1.0.0-beta.2",
 		"ts-node": "^10.9.1",
 		"tslib": "^2.4.1",
 		"typescript": "^5.0.0",
-		"vite": "^4.4.2"
+		"vite": "^4.4.2",
+		"vite-plugin-node-polyfills": "^0.16.0"
 	},
 	"type": "module",
 	"dependencies": {
@@ -39,9 +41,10 @@
 		"html5-qrcode": "^2.3.8",
 		"jsonwebtoken": "^9.0.2",
 		"jspdf": "^2.5.1",
+		"memfs": "^4.6.0",
+		"nodemailer": "^6.9.7",
 		"prisma": "^5.5.2",
 		"qrcode-svg": "^1.1.0",
-		"svg-to-pdfkit": "^0.1.8",
-		"nodemailer": "^6.9.7"
+		"svg-to-pdfkit": "^0.1.8"
 	}
 }
