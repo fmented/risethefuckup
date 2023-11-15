@@ -6,7 +6,7 @@ export const POST: RequestHandler = async ({ request }) => {
     try {
         const { name, to, pdf }: { name: string, to: string, pdf: string } = await request.json()
 
-        sendMail({ to, name, base64string: pdf, as: "e-Ticket dan Merch Receipt" })
+        await sendMail({ to, name, base64string: pdf, as: "e-Ticket dan Merch Receipt" })
 
 
         return new Response(JSON.stringify({ status: "Success" }));

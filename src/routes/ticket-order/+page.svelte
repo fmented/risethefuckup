@@ -8,34 +8,101 @@
     let size = "";
     let email = "";
     const sizes = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+    let messages: string[] = [];
+
+    let loading = false;
+
+    let link = "";
+    let id: string;
+    let process = "";
 
     $: good = bundling ? name && size && email : name && email;
 
-    function order() {
-        if (!name) return;
-        window
-            .fetch(
-                bundling ? "/api/v1/order-bundling" : `/api/v1/order-ticket`,
-                {
-                    body: JSON.stringify({
-                        name,
-                        size,
-                        email,
-                    }),
-                    method: "POST",
-                    headers: {
-                        "content-type": "application/json",
-                        passcode: localStorage.getItem("passcode") || "",
-                    },
-                }
-            )
-            .then((res) => {
-                res.json().then((v) => {
-                    window.location.href = bundling
-                        ? `/api/v1/bundlingpdf/${v.id}?send=true`
-                        : `/api/v1/ticketpdf/${v.id}?send=true`;
-                });
-            });
+    async function order() {
+        if (!good) return;
+        loading = true;
+        process = "Creating Data";
+
+        try {
+            const data = await (
+                await fetch(
+                    bundling
+                        ? "/api/v1/order-bundling"
+                        : `/api/v1/order-ticket`,
+                    {
+                        body: JSON.stringify({
+                            name,
+                            size,
+                            email,
+                        }),
+                        method: "POST",
+                        headers: {
+                            "content-type": "application/json",
+                        },
+                    }
+                )
+            ).json();
+
+            if (!data.id) return;
+
+            messages = [
+                ...messages,
+                !data.id ? "Error when creating data" : "Success creating data",
+            ];
+
+            id = data.id;
+
+            process = "Generating PDF";
+
+            const d2 = await (
+                await fetch(
+                    bundling
+                        ? "/api/v1/bundlingpdf/" + id
+                        : `/api/v1/ticketpdf/` + id
+                )
+            ).json();
+
+            if (!d2.pdf) return;
+
+            messages = [
+                ...messages,
+                !d2.pdf
+                    ? "Error when generating pdf"
+                    : "Success generating pdf",
+            ];
+
+            process = "Sending PDF";
+
+            const d3 = await (
+                await fetch(
+                    bundling
+                        ? "/api/v1/bundlingpdf/" + data.ticketId + "/send"
+                        : `/api/v1/ticketpdf/` + id + "/send",
+                    {
+                        body: JSON.stringify({
+                            name,
+                            to: bundling
+                                ? d2.merch.ticket.email
+                                : d2.ticket.email,
+                            pdf: d2.pdf,
+                        }),
+                        method: "POST",
+                        headers: {
+                            "content-type": "application/json",
+                        },
+                    }
+                )
+            ).json();
+
+            if (d3.status === "Success") {
+                messages = [...messages, "Success sending pdf"];
+                link = d2.pdf;
+            } else return (messages = [...messages, "Error when sending pdf"]);
+        } catch (error) {
+            messages = [...messages, error as string];
+        }
+
+        process = "";
     }
 </script>
 
@@ -43,31 +110,58 @@
     <Header />
     <div class="main">
         <form>
-            <div class="in">
-                <label for="name">Name</label>
-                <input type="text" bind:value={name} id="name" />
-            </div>
-            <div class="in">
-                <label for="email">Email</label>
-                <input type="text" bind:value={email} id="email" />
-            </div>
-            <div class="cb">
-                <label for="bundling">Bundling</label>
-                <input type="checkbox" bind:checked={bundling} id="bundling" />
-            </div>
-            {#if bundling}
+            {#if loading}
+                {#if process}
+                    <div class="in">
+                        <label for="process">Process</label>
+                        <input type="text" value={process} id="process" />
+                    </div>
+                {/if}
+                {#each messages as e, i}
+                    <div class="in">
+                        <label for="error-{i}">Status</label>
+                        <input type="text" value={e} id="error-{i}" />
+                    </div>
+                {/each}
+                {#if link}
+                    <a
+                        href={link}
+                        class="info"
+                        download="{name}.pdf"
+                        rel="noopener noreferrer">Download PDF file</a
+                    >
+                {/if}
+            {:else}
                 <div class="in">
-                    <label for="size">Size</label>
-                    <select name="size" id="size" bind:value={size}>
-                        <option value="" disabled>Select Size</option>
-                        {#each sizes as s}
-                            <option value={s}>{s}</option>
-                        {/each}
-                    </select>
+                    <label for="name">Name</label>
+                    <input type="text" bind:value={name} id="name" />
                 </div>
+                <div class="in">
+                    <label for="email">Email</label>
+                    <input type="text" bind:value={email} id="email" />
+                </div>
+                <div class="cb">
+                    <label for="bundling">Bundling</label>
+                    <input
+                        type="checkbox"
+                        bind:checked={bundling}
+                        id="bundling"
+                    />
+                </div>
+                {#if bundling}
+                    <div class="in">
+                        <label for="size">Size</label>
+                        <select name="size" id="size" bind:value={size}>
+                            <option value="" disabled>Select Size</option>
+                            {#each sizes as s}
+                                <option value={s}>{s}</option>
+                            {/each}
+                        </select>
+                    </div>
+                {/if}
             {/if}
 
-            {#if good}
+            {#if good && !loading}
                 <button class="info" transition:slide on:click={order}
                     >Order</button
                 >
@@ -140,14 +234,18 @@
         padding-bottom: 4rem;
     }
 
-    button {
+    button,
+    a {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
+        text-align: center;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
-    button {
+    button,
+    a {
         font-size: 16px;
         padding: 2em;
     }

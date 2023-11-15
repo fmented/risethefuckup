@@ -69,13 +69,7 @@
                 <tbody>
                     {#each data.tickets || [] as r}
                         <tr>
-                            <td
-                                ><a
-                                    href={r.Merch
-                                        ? `/api/v1/bundlingpdf/${r.Merch.id}`
-                                        : `/api/v1/ticketpdf/${r.id}`}>{r.id}</a
-                                ></td
-                            >
+                            <td> {r.id}</td>
                             <td>{r.name}</td>
                             <td>{r.Merch?.size ? r.Merch.size : "-"}</td>
                             <td

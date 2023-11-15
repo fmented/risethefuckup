@@ -12,21 +12,13 @@ export const GET: RequestHandler = async ({ request, url, params, fetch }) => {
         const b = await generateTicket(ticket)
         const arrayBuff = await b.arrayBuffer()
 
-        if (!send)
-            return new Response(arrayBuff);
+        // if (!send)
+        //     return new Response(arrayBuff);
 
         const buff = Buffer.from(arrayBuff)
         const base64string = `data:application/pdf;base64,${buff.toString("base64")}`
 
-        await fetch(`/api/v1/ticketpdf/${id}/send`, {
-            method: "POST",
-            body: JSON.stringify({
-                to: ticket.email,
-                name: ticket.name,
-                pdf: base64string
-            })
-        })
-        return new Response(arrayBuff);
+        return new Response(JSON.stringify({ ticket, pdf: base64string }));
 
     } catch (error) {
         console.log(error)

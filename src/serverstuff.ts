@@ -1,4 +1,4 @@
-import { PrismaClient, type Ticket as T, type Merch as M, MerchSize } from '@prisma/client'
+import { PrismaClient, type Ticket as T, type Merch as M } from '@prisma/client'
 import { randomBytes } from 'crypto'
 import blobstream from "blob-stream"
 const prisma = new PrismaClient()

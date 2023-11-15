@@ -7,6 +7,9 @@ export const POST: RequestHandler = async ({ request }) => {
     try {
         const data: { name: string, size: MerchSize, email: string } = await request.json()
         const merch = await model.merch.create({
+            include: {
+                ticket: true
+            },
             data: {
                 name: data.name,
                 size: data.size,
