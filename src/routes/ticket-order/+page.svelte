@@ -6,9 +6,10 @@
     let name = "";
     let bundling = false;
     let size = "";
+    let email = "";
     const sizes = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
-    $: good = bundling ? name && size : name;
+    $: good = bundling ? name && size && email : name && email;
 
     function order() {
         if (!name) return;
@@ -19,6 +20,7 @@
                     body: JSON.stringify({
                         name,
                         size,
+                        email,
                     }),
                     method: "POST",
                     headers: {
@@ -29,9 +31,9 @@
             )
             .then((res) => {
                 res.json().then((v) => {
-                    window.location.pathname = bundling
-                        ? `/api/v1/bundlingpdf/${v.id}`
-                        : `/api/v1/ticketpdf/${v.id}`;
+                    window.location.href = bundling
+                        ? `/api/v1/bundlingpdf/${v.id}?send=true`
+                        : `/api/v1/ticketpdf/${v.id}?send=true`;
                 });
             });
     }
@@ -44,6 +46,10 @@
             <div class="in">
                 <label for="name">Name</label>
                 <input type="text" bind:value={name} id="name" />
+            </div>
+            <div class="in">
+                <label for="email">Email</label>
+                <input type="text" bind:value={email} id="email" />
             </div>
             <div class="cb">
                 <label for="bundling">Bundling</label>

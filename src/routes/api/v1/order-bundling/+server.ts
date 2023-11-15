@@ -5,7 +5,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 export const POST: RequestHandler = async ({ request }) => {
 
     try {
-        const data: { name: string, size: MerchSize } = await request.json()
+        const data: { name: string, size: MerchSize, email: string } = await request.json()
         const merch = await model.merch.create({
             data: {
                 name: data.name,
@@ -14,7 +14,8 @@ export const POST: RequestHandler = async ({ request }) => {
                 ticket: {
                     create: {
                         qr: qr(),
-                        name: data.name
+                        name: data.name,
+                        email: data.email
                     }
                 }
             }

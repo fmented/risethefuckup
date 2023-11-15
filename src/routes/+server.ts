@@ -13,7 +13,6 @@ export const POST: RequestHandler = async ({ cookies, request, }) => {
             const token = jwt.sign({
                 data: { passcode: import.meta.env.VITE_PASSCODE, since: Date.now() }
             }, import.meta.env.VITE_SECRET, {});
-            console.log(passcode, import.meta.env.VITE_PASSCODE);
 
             cookies.set("passcode", token)
 

@@ -23,6 +23,7 @@ model Ticket {
   name      String?
   id        String    @unique @default(uuid())
   createdAt DateTime  @default(now())
+  email     String
   Merch     Merch?
 
   @@index([qr, id])
@@ -46,7 +47,7 @@ model Merch {
   createdAt DateTime  @default(now())
   id        String    @unique @default(uuid())
   ticketId  String    @unique
-  ticket    Ticket    @relation(fields: [ticketId], references: [id])
+  ticket    Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@index([qr, id, ticketId])
 }

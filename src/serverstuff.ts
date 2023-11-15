@@ -7472,3 +7472,50 @@ export async function generateTicket(data: { name: string | null, qr: string, id
     })
   })
 }
+
+
+import nodemailer from "nodemailer"
+
+const email = import.meta.env.VITE_EMAIL_USER
+const pw = import.meta.env.VITE_EMAIL_PASSWORD
+
+
+const transport = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: email,
+    pass: pw
+  },
+})
+
+
+export async function sendMail({ to, name, base64string, as = "e-Ticket" }: { to: string, base64string: string, as?: "e-Ticket" | "e-Ticket dan Merch Receipt", name: string }) {
+
+  transport.sendMail({
+    from: "Loudeast Media",
+    to: to,
+    text: `Hi ${name}, 
+    Lampiran dibawah ini adalah ${as} ${import.meta.env.VITE_EVENT_NAME} kamu.
+        Kami sarankan untuk tidak menunjukkan ${as} anda kepada siapapun sebelum acara.
+
+        See you at the venue.
+        `,
+    html: `<h1>Hi Fauky,<h1><br/>
+    <p>Lampiran dibawah ini adalah ${as} ${import.meta.env.VITE_EVENT_NAME} kamu</p>
+        <strong>Kami sarankan untuk tidak menunjukkan ${as} anda kepada siapapun sebelum acara.</strong>
+        <br/>
+        <br/>
+        <p>See you at the venue.</p>
+        `
+    ,
+    subject: `${as} ${import.meta.env.VITE_EVENT_NAME}`,
+    attachments: [
+      {
+        path: base64string,
+        filename: `${as}.pdf`
+      }
+    ]
+
+
+  })
+}
