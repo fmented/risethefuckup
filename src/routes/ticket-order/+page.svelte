@@ -77,6 +77,7 @@
 
     async function order() {
         if (!good) return;
+        if (pdf == undefined) return;
         loading = true;
         process = "Creating Data";
 
