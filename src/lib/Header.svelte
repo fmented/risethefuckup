@@ -26,11 +26,13 @@
         rel="external">STATS</a
     >
 
-    <a
-        href="/ticket-order"
-        class:active-link={location?.pathname.startsWith("/ticket")}
-        rel="external">ORDER</a
-    >
+    {#if import.meta.env.DEV}
+        <a
+            href="/ticket-order"
+            class:active-link={location?.pathname.startsWith("/ticket")}
+            rel="external">ORDER</a
+        >
+    {/if}
 </div>
 
 <style>
