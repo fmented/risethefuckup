@@ -7491,7 +7491,7 @@ const transport = nodemailer.createTransport({
 
 export async function sendMail({ to, name, base64string, as = "e-Ticket" }: { to: string, base64string: string, as?: "e-Ticket" | "e-Ticket dan Merch Receipt", name: string }) {
 
-  transport.sendMail({
+  return await transport.sendMail({
     from: "Loudeast Media",
     to: to,
     text: `Hi ${name}, 
