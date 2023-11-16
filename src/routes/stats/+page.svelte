@@ -34,7 +34,9 @@
 
     export let data: PageData;
 
-    async function click(d: (typeof data)["data"][0]) {
+    type Unwrap<A> = A extends unknown[] ? Unwrap<A[number]> : A;
+
+    async function click(d: Unwrap<PageData["data"]>) {
         pdf = w.PDFDocument;
         if (pdf == undefined) return;
         loading = true;
@@ -62,18 +64,18 @@
     }
 
     async function sendEmail(
-        data: Ticket & { Merch: (Merch & { ticket: Ticket }) | null },
+        ticket: Ticket & { Merch: (Merch & { ticket: Ticket }) | null },
         pdf: string
     ) {
         return await (
             await fetch(
-                data.Merch
-                    ? "/api/v1/bundlingpdf/" + data.id + "/send"
-                    : `/api/v1/ticketpdf/` + data.id + "/send",
+                ticket.Merch
+                    ? "/api/v1/bundlingpdf/" + ticket.id + "/send"
+                    : `/api/v1/ticketpdf/` + ticket.id + "/send",
                 {
                     body: JSON.stringify({
-                        name: data.name,
-                        to: data.email,
+                        name: ticket.name,
+                        to: ticket.email,
                         pdf: pdf,
                     }),
                     method: "POST",
@@ -121,7 +123,7 @@
     <div class="main">
         <div>
             <h1>Ticket</h1>
-            <small>{data.data.length || 0} Rows</small>
+            <small>{data?.data?.length || 0} Rows</small>
             <table>
                 <thead>
                     <tr>
@@ -132,7 +134,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {#each data.data || [] as r}
+                    {#each data?.data || [] as r}
                         <tr>
                             <td on:contextmenu|preventDefault={() => click(r)}>
                                 <span>{r.id}</span></td
