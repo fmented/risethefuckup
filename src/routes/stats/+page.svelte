@@ -3,7 +3,6 @@
     import Header from "$lib/Header.svelte";
     import { onMount } from "svelte";
     import { generateReceipt, generateTicket } from "$lib";
-    import FileSaver from "file-saver";
 
     function blob2uri(b: Blob): Promise<string> {
         return new Promise((res) => {
@@ -46,11 +45,22 @@
             ? await generateReceipt({ ...d.Merch, ticket: d }, pdf)
             : await generateTicket(d, pdf);
 
-        text = "Download is starting";
-        FileSaver.saveAs(blob, `${d.name}_${d.id}.pdf`, { autoBom: false });
-        setTimeout(() => {
-            loading = false;
-        }, 1000);
+        let uri = await blob2uri(blob);
+
+        navigator.serviceWorker.ready.then((reg) => {
+            reg.active?.postMessage(
+                JSON.stringify({ cmd: "download-pdf", data: uri })
+            );
+            navigator.serviceWorker.addEventListener("message", (e) => {
+                if (e.data == "pdf-ready") {
+                    window.location.pathname = `/${d.name}_${d.id}.pdf`;
+                    text = "Download is starting";
+                    setTimeout(() => {
+                        loading = false;
+                    }, 1000);
+                }
+            });
+        });
     }
 
     async function sendEmail(
@@ -195,6 +205,7 @@
         border: 2px solid #ed7;
         text-align: center;
         font-family: Verdana, Geneva, Tahoma, sans-serif;
+        user-select: none;
     }
 
     td {

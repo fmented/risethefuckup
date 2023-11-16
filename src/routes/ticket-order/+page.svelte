@@ -7,6 +7,7 @@
 
     interface GW {
         PDFDocument: PDFKit.PDFDocument;
+        SVGO: { optimize: (s: string) => string };
     }
 
     let w: GW & typeof window;
@@ -25,9 +26,24 @@
     let messages: string[] = [];
 
     let loading = false;
+    let fillename = "";
 
-    let link = "";
+    let download: RetryButton = {
+        show: false,
+        callback: async function () {
+            if (!fillename) return;
+            window.location.pathname = `/download-pdf`;
+        },
+    };
     let process = "";
+
+    type RetryButton = {
+        show: boolean;
+        callback: () => Promise<void>;
+    };
+
+    let retryCreate: RetryButton | null = null;
+    let retrySend: RetryButton | null = null;
 
     $: good = bundling ? name && size && email : name && email;
 
@@ -53,7 +69,7 @@
                   };
               })
             | (Ticket & { valid: boolean; name: string }),
-        pdf: string
+        pdf: ArrayBufferLike
     ) {
         return await (
             await fetch(
@@ -61,14 +77,12 @@
                     ? "/api/v1/bundlingpdf/" + data.ticketId + "/send"
                     : `/api/v1/ticketpdf/` + data.id + "/send",
                 {
-                    body: JSON.stringify({
-                        name,
-                        to: email,
-                        pdf: pdf,
-                    }),
+                    body: pdf,
                     method: "POST",
                     headers: {
                         "content-type": "application/json",
+                        to: email,
+                        name: name,
                     },
                 }
             )
@@ -122,14 +136,15 @@
 
             process = "Generating PDF";
 
-            let _pdf: string;
+            let blob: Blob;
+            let _pdf: ArrayBufferLike;
 
             if ("ticketId" in data && typeof data.name === "string") {
-                const blob = await generateReceipt(data, pdf);
-                _pdf = await blob2uri(blob);
+                blob = await generateReceipt(data, pdf);
+                _pdf = await blob.arrayBuffer();
             } else {
-                const blob = await generateTicket(data, pdf);
-                _pdf = await blob2uri(blob);
+                blob = await generateTicket(data, pdf);
+                _pdf = await blob.arrayBuffer();
             }
 
             messages = [
@@ -141,16 +156,46 @@
 
             process = "Sending PDF";
 
-            const res: { status: string } = await sendEmail(data, _pdf);
+            fillename =
+                "ticketId" in data
+                    ? `${name}_${data.ticketId}`
+                    : `${name}_${data.id}`;
+
+            let res: { status: string } | undefined = await sendEmail(
+                data,
+                _pdf
+            );
 
             messages = [
                 ...messages,
-                res.status == "Failed"
+                res && res.status == "Failed"
                     ? "Error when sending PDF"
                     : "Done sending pdf",
             ];
 
-            link = _pdf;
+            if (res?.status == "Failed") {
+                retrySend = {
+                    show: true,
+                    callback: async function () {
+                        await sendEmail(data, _pdf);
+                    },
+                };
+            }
+
+            navigator.serviceWorker.ready.then(async (reg) => {
+                reg.active?.postMessage(
+                    JSON.stringify({
+                        cmd: "download-pdf",
+                        data: await blob2uri(blob),
+                    })
+                );
+
+                navigator.serviceWorker.addEventListener("message", (e) => {
+                    if (e.data == "pdf-ready") {
+                        download = { ...download, show: true };
+                    }
+                });
+            });
 
             // id = data.id;
 
@@ -202,7 +247,7 @@
             //     } else return (messages = [...messages, "Error when sending pdf"]);
         } catch (error) {
             messages = [...messages, error as string];
-            console.error(error);
+            retryCreate = { show: true, callback: order };
         }
 
         process = "";
@@ -216,23 +261,27 @@
             {#if loading}
                 {#each messages as e, i}
                     <div class="in">
-                        <label for="error-{i}">Status</label>
-                        <input type="text" value={e} id="error-{i}" />
+                        <label for="msg-{i}">Status</label>
+                        <input type="text" readonly value={e} id="msg-{i}" />
                     </div>
                 {/each}
                 {#if process}
                     <div class="in">
                         <label for="process">Process</label>
-                        <input type="text" value={process} id="process" />
+                        <input
+                            type="text"
+                            readonly
+                            value={process}
+                            id="process"
+                        />
                     </div>
                 {/if}
-                {#if link}
-                    <a
-                        href={link}
-                        class="info"
-                        download="{name}.pdf"
-                        rel="noopener noreferrer">Download PDF file</a
-                    >
+                {#if download.show}
+                    <div class="in" id="download-button">
+                        <a id="download" href="{fillename}.pdf" class="info"
+                            >Download PDF file</a
+                        >
+                    </div>
                 {/if}
             {:else}
                 <div class="in">
@@ -267,6 +316,22 @@
             {#if good && !loading}
                 <button class="info" transition:slide on:click={order}
                     >Order</button
+                >
+            {/if}
+
+            {#if retryCreate && retryCreate.show}
+                <button
+                    class="error"
+                    transition:slide
+                    on:click={retryCreate.callback}>Retry</button
+                >
+            {/if}
+
+            {#if retrySend && retrySend.show}
+                <button
+                    class="error"
+                    transition:slide
+                    on:click={retrySend.callback}>Retry</button
                 >
             {/if}
         </form>
@@ -317,6 +382,10 @@
         padding: 2em;
     }
 
+    form > #download-button.in {
+        justify-content: center;
+    }
+
     form > .cb {
         display: flex;
         justify-content: space-between;
@@ -355,6 +424,11 @@
 
     label {
         font-family: Verdana, Geneva, Tahoma, sans-serif;
+    }
+
+    a#download {
+        position: initial;
+        flex-grow: 1;
     }
 
     @media print {

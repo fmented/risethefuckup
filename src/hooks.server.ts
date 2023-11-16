@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import jwt, { type JwtPayload } from "jsonwebtoken"
 export async function handle({ event, resolve }) {
-    if (event.url.pathname.startsWith('/node_modules/')) {
+    if (event.url.pathname.startsWith('/node_modules/') || event.url.pathname.endsWith(".pdf")) {
         return new Response(null);
     }
 

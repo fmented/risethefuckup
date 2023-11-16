@@ -39,20 +39,20 @@ worker.addEventListener('activate', (event) => {
  * Fetch the asset from the network and store it in the cache.
  * Fall back to the cache if the user is offline.
  */
-// async function fetchAndCache(request: Request) {
-//     const cache = await caches.open(`offline${version}`);
+async function fetchAndCache(request: Request) {
+    const cache = await caches.open(`offline${version}`);
 
-//     try {
-//         const response = await fetch(request);
-//         cache.put(request, response.clone());
-//         return response;
-//     } catch (err) {
-//         const response = await cache.match(request);
-//         if (response) return response;
+    try {
+        const response = await fetch(request);
+        cache.put(request, response.clone());
+        return response;
+    } catch (err) {
+        const response = await cache.match(request);
+        if (response) return response;
 
-//         throw err;
-//     }
-// }
+        throw err;
+    }
+}
 
 // worker.addEventListener('fetch', (event) => {
 //     if (event.request.method !== 'GET' || event.request.headers.has('range')) return;
@@ -79,3 +79,51 @@ worker.addEventListener('activate', (event) => {
 //         );
 //     }
 // });
+
+let blob: Blob | null = null
+
+function dataUrItoBlob(dataUri: string) {
+    let binary = worker.atob(dataUri.split(',')[1]);
+    var array: number[] = [];
+    for (var i = 0; i < binary.length; i++) {
+        array.push(binary.charCodeAt(i));
+    }
+    return new Blob([new Uint8Array(array)], { type: "application/pdf" });
+};
+
+
+worker.addEventListener("fetch", async (e) => {
+    e.respondWith(
+        (async () => {
+            if (e.request.url.endsWith(".pdf")) {
+
+                if (!blob) return fetch(e.request)
+
+                const pdf = await blob.arrayBuffer()
+                const name = e.request.url.split("/").at(-1) || "download.pdf"
+                return new Response(pdf, {
+                    headers: {
+                        "Content-Type": "application/pdf",
+                        "Content-Disposition": `attachment; filename="${decodeURI(name)}"`
+                    },
+
+                })
+            }
+
+
+
+            return fetch(e.request)
+
+        })()
+    )
+})
+
+
+worker.addEventListener("message", async e => {
+    blob = null
+    const message: { cmd: string, data: any } = JSON.parse(e.data)
+    if (message.cmd === "download-pdf") {
+        blob = dataUrItoBlob(message.data)
+        e.source?.postMessage("pdf-ready")
+    }
+})
