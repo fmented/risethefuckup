@@ -267,7 +267,7 @@ const page = {
   margin: 25
 }
 
-export async function generateReceipt(data: Merch & { ticket: Ticket }, pdf: PDFKit.PDFDocument): Promise<Blob> {
+export async function generateReceipt(data: { qr: string, size: any, name: string, id: string } & { ticket: { qr: string, name: string, id: string } }, pdf: PDFKit.PDFDocument): Promise<Blob> {
   const font = await fontBlob.arrayBuffer()
   return new Promise((res, rej) => {
     const stream = blobstream()

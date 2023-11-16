@@ -64,8 +64,8 @@
     }
 
     async function sendEmail(
-        ticket: Ticket & { Merch: (Merch & { ticket: Ticket }) | null },
-        pdf: string
+        ticket: Unwrap<PageData["data"]>,
+        pdf: ArrayBuffer
     ) {
         return await (
             await fetch(
@@ -73,32 +73,31 @@
                     ? "/api/v1/bundlingpdf/" + ticket.id + "/send"
                     : `/api/v1/ticketpdf/` + ticket.id + "/send",
                 {
-                    body: JSON.stringify({
-                        name: ticket.name,
-                        to: ticket.email,
-                        pdf: pdf,
-                    }),
+                    body: pdf,
                     method: "POST",
                     headers: {
                         "content-type": "application/json",
+                        To: ticket.email,
+                        Name: ticket.name,
                     },
                 }
             )
         ).json();
     }
 
-    async function resend(d: (typeof data)["data"][0]) {
+    async function resend(d: Unwrap<PageData["data"]>) {
         if (pdf == undefined) return;
         loading = true;
         text = "Preparing PDF";
         const blob = d.Merch
             ? await generateReceipt({ ...d.Merch, ticket: d }, pdf)
             : await generateTicket(d, pdf);
+
         const uri = await blob2uri(blob);
 
         text = "Re-sending PDF to " + d.email;
 
-        const { status } = await sendEmail(d, uri);
+        const { status } = await sendEmail(d, await blob.arrayBuffer());
 
         if (status && status == "Success") {
             text = "Done re-sending PDF";

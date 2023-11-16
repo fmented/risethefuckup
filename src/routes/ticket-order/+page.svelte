@@ -81,8 +81,8 @@
                     method: "POST",
                     headers: {
                         "content-type": "application/json",
-                        to: email,
-                        name: name,
+                        To: email,
+                        Name: name,
                     },
                 }
             )
