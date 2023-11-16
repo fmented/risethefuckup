@@ -1,5 +1,4 @@
-import { PrismaClient, type Ticket as T, type Merch as M } from '@prisma/client/edge'
-import { withAccelerate } from '@prisma/extension-accelerate'
+import { PrismaClient, type Ticket as T, type Merch as M } from '@prisma/client'
 
 import { randomBytes } from 'crypto'
 import blobstream from "blob-stream"
@@ -9,7 +8,7 @@ const prisma = new PrismaClient({
       url: import.meta.env.VITE_DATABASE_URL
     }
   }
-}).$extends(withAccelerate())
+})
 import pdf from "pdfkit"
 import QRCode from "qrcode-svg"
 import s2p from "svg-to-pdfkit"
@@ -7507,21 +7506,7 @@ export async function sendMail({ to, name, base64string, as = "e-Ticket" }: { to
 
         See you at the venue.
         `,
-    html: `<!DOCTYPE html>
-    <html>
-    <head>
-    <title>${as}</title>
-    </head>
-    <body>
-    <h1>Hi ${name},<h1><br/>
-    <p>Lampiran dibawah ini adalah ${as} ${import.meta.env.VITE_EVENT_NAME} kamu</p>
-        <strong>Kami sarankan untuk tidak menunjukkan ${as} kamu kepada siapapun sebelum acara.</strong>
-        <br/>
-        <br/>
-        <p>See you at the venue.</p>
-        </body>
-        </html>
-        `
+    html: `<!DOCTYPE html><html><head><title>${as}</title></head><body><h1>Hi ${name},<h1><br/><p>Lampiran dibawah ini adalah ${as} ${import.meta.env.VITE_EVENT_NAME} kamu</p><strong>Kami sarankan untuk tidak menunjukkan ${as} kamu kepada siapapun sebelum acara.</strong><br/><br/><p>See you at the venue.</p></body></html>`
     ,
     subject: `${as} ${import.meta.env.VITE_EVENT_NAME}`,
     attachments: [

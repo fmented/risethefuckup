@@ -8,7 +8,7 @@
 		"preview": "vite preview",
 		"gen": "ts-node-esm ./scripts/generateDatabase.ts && ts-node-esm ./scripts/pack.ts",
 		"reset": "ts-node-esm ./scripts/reset.ts",
-		"postinstall": "npx prisma generate --no-engine",
+		"postinstall": "npx prisma generate",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
 	},
