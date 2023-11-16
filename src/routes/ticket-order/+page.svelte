@@ -182,7 +182,10 @@
                         const msg = messages;
                         msg.pop();
                         messages = msg;
-                        await sendEmail(data, _pdf);
+                        res = await sendEmail(data, _pdf);
+                        if (res?.status != "Failed") {
+                            retrySend = null;
+                        }
                     },
                 };
             }
@@ -256,6 +259,7 @@
         }
 
         process = "";
+        retryCreate = null;
     }
 </script>
 
