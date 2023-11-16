@@ -91,6 +91,7 @@
 
     async function order() {
         if (!good) return;
+        pdf = w.PDFDocument;
         if (pdf == undefined) return;
         loading = true;
         process = "Creating Data";
