@@ -3,6 +3,7 @@
     import Header from "$lib/Header.svelte";
     import { onMount } from "svelte";
     import { generateReceipt, generateTicket } from "$lib";
+    import type { PageData } from "./$types";
 
     function blob2uri(b: Blob): Promise<string> {
         return new Promise((res) => {
@@ -31,13 +32,10 @@
         pdf = w.PDFDocument;
     });
 
-    export let data: {
-        tickets: (Ticket & { Merch: (Merch & { ticket: Ticket }) | null })[];
-    } = {
-        tickets: [],
-    };
+    export let data: PageData;
 
-    async function click(d: (typeof data)["tickets"][0]) {
+    async function click(d: (typeof data)["data"][0]) {
+        pdf = w.PDFDocument;
         if (pdf == undefined) return;
         loading = true;
         text = "Preparing PDF for download";
@@ -87,7 +85,7 @@
         ).json();
     }
 
-    async function resend(d: (typeof data)["tickets"][0]) {
+    async function resend(d: (typeof data)["data"][0]) {
         if (pdf == undefined) return;
         loading = true;
         text = "Preparing PDF";
@@ -121,42 +119,9 @@
 <div class="fuck">
     <Header />
     <div class="main">
-        <!-- <div>
-            <h1>Bundling</h1>
-            <small>{data?.merchs?.length || 0} Rows</small>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Size</th>
-                        <th>Redeemed At</th>
-                        <th>Valid</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {#each data?.merchs || [] as r}
-                        <tr>
-                            <td
-                                ><a href="/api/v1/bundlingpdf/{r.id}">{r.id}</a
-                                ></td
-                            >
-                            <td>{r.name}</td>
-                            <td>{r.size}</td>
-                            <td
-                                >{r.claimedAt
-                                    ? f.format(new Date(r.claimedAt))
-                                    : "-"}</td
-                            >
-                            <td>{r.valid ? "✔️" : "❌"}</td>
-                        </tr>
-                    {/each}
-                </tbody>
-            </table>
-        </div> -->
         <div>
             <h1>Ticket</h1>
-            <small>{data?.tickets?.length || 0} Rows</small>
+            <small>{data.data.length || 0} Rows</small>
             <table>
                 <thead>
                     <tr>
@@ -164,11 +129,10 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Merch</th>
-                        <!-- <th>Valid</th> -->
                     </tr>
                 </thead>
                 <tbody>
-                    {#each data.tickets || [] as r}
+                    {#each data.data || [] as r}
                         <tr>
                             <td on:contextmenu|preventDefault={() => click(r)}>
                                 <span>{r.id}</span></td
@@ -180,17 +144,12 @@
                                 ><span>{r.email}</span></td
                             >
                             <td>{r.Merch?.size ? r.Merch.size : "-"}</td>
-                            <!-- <td>{r.valid ? "✔️" : "❌"}</td> -->
                         </tr>
                     {/each}
                 </tbody>
             </table>
         </div>
     </div>
-
-    <!-- {#if data}
-        <button class="info">{"PRINT"}</button>
-    {/if} -->
 </div>
 
 {#if loading}

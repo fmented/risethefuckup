@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DB_URL")
+  url      = env("DATABASE_URL")
 }
 
 enum TicketClass {
@@ -20,7 +20,7 @@ enum TicketClass {
 model Ticket {
   qr        String    @id @unique
   checkInAt DateTime?
-  name      String?
+  name      String
   id        String    @unique @default(uuid())
   createdAt DateTime  @default(now())
   email     String
