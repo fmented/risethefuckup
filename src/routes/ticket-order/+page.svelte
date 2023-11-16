@@ -93,6 +93,7 @@
         if (!good) return;
         pdf = w.PDFDocument;
         if (pdf == undefined) return;
+        messages = [];
         loading = true;
         process = "Creating Data";
 
@@ -178,6 +179,9 @@
                 retrySend = {
                     show: true,
                     callback: async function () {
+                        const msg = messages;
+                        msg.pop();
+                        messages = msg;
                         await sendEmail(data, _pdf);
                     },
                 };
@@ -247,7 +251,7 @@
             //         link = d2.pdf;
             //     } else return (messages = [...messages, "Error when sending pdf"]);
         } catch (error) {
-            messages = [...messages, error as string];
+            messages = [...messages, "Coudn't Create Order"];
             retryCreate = { show: true, callback: order };
         }
 
