@@ -32,7 +32,7 @@
         pdf = w.PDFDocument;
     });
 
-    export let data: PageData;
+    export let data: PageData = { data: [] };
 
     type Unwrap<A> = A extends unknown[] ? Unwrap<A[number]> : A;
 
