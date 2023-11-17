@@ -4,6 +4,7 @@
     import { slide } from "svelte/transition";
     import { generateReceipt, generateTicket } from "$lib";
     import { onMount } from "svelte";
+    import { dev } from "$app/environment";
 
     interface GW {
         PDFDocument: PDFKit.PDFDocument;
@@ -74,15 +75,25 @@
         return await (
             await fetch(
                 "ticketId" in data
-                    ? "/api/v1/bundlingpdf/" + data.ticketId + "/send"
-                    : `/api/v1/ticketpdf/` + data.id + "/send",
+                    ? `${
+                          dev
+                              ? "http://localhost:8080"
+                              : import.meta.env.VITE_EMAIL_URL
+                      }/bundlingpdf`
+                    : `${
+                          dev
+                              ? "http://localhost:8080"
+                              : import.meta.env.VITE_EMAIL_URL
+                      }/ticketpdf`,
                 {
                     body: pdf,
                     method: "POST",
                     headers: {
-                        "content-type": "application/json",
+                        "Content-Type": "application/pdf",
                         To: email,
                         Name: name,
+                        "no-cors": "true",
+                        "Access-Control-Request-Method": "POST",
                     },
                 }
             )
@@ -147,6 +158,7 @@
             } else {
                 blob = await generateTicket(data, pdf);
                 _pdf = await blob.arrayBuffer();
+                console.log(await blob2uri(blob));
             }
 
             messages = [
@@ -204,55 +216,6 @@
                     }
                 });
             });
-
-            // id = data.id;
-
-            // process = "Generating PDF";
-
-            // const d2 = await (
-            //     await fetch(
-            //         bundling
-            //             ? "/api/v1/bundlingpdf/" + id
-            //             : `/api/v1/ticketpdf/` + id
-            //     )
-            // ).json();
-
-            //     if (!d2.pdf) return;
-
-            //     messages = [
-            //         ...messages,
-            //         !d2.pdf
-            //             ? "Error when generating pdf"
-            //             : "Success generating pdf",
-            //     ];
-
-            //     process = "Sending PDF";
-
-            // const d3 = await (
-            //     await fetch(
-            //         "ticketId" in data
-            //             ? "/api/v1/bundlingpdf/" + data.ticketId + "/send"
-            //             : `/api/v1/ticketpdf/` + id + "/send",
-            //         {
-            //             body: JSON.stringify({
-            //                 name,
-            //                 to: bundling
-            //                     ? d2.merch.ticket.email
-            //                     : d2.ticket.email,
-            //                 pdf: d2.pdf,
-            //             }),
-            //             method: "POST",
-            //             headers: {
-            //                 "content-type": "application/json",
-            //             },
-            //         }
-            //     )
-            // ).json();
-
-            //     if (d3.status === "Success") {
-            //         messages = [...messages, "Success sending pdf"];
-            //         link = d2.pdf;
-            //     } else return (messages = [...messages, "Error when sending pdf"]);
         } catch (error) {
             messages = [...messages, "Coudn't Create Order"];
             retryCreate = { show: true, callback: order };

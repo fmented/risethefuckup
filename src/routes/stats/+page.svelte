@@ -4,6 +4,7 @@
     import { onMount } from "svelte";
     import { generateReceipt, generateTicket } from "$lib";
     import type { PageData } from "./$types";
+    import { dev } from "$app/environment";
 
     function blob2uri(b: Blob): Promise<string> {
         return new Promise((res) => {
@@ -70,15 +71,25 @@
         return await (
             await fetch(
                 ticket.Merch
-                    ? "/api/v1/bundlingpdf/" + ticket.id + "/send"
-                    : `/api/v1/ticketpdf/` + ticket.id + "/send",
+                    ? `${
+                          dev
+                              ? "http://localhost:8080"
+                              : import.meta.env.VITE_EMAIL_URL
+                      }/bundlingpdf`
+                    : `${
+                          dev
+                              ? "http://localhost:8080"
+                              : import.meta.env.VITE_EMAIL_URL
+                      }/ticketpdf`,
                 {
                     body: pdf,
                     method: "POST",
                     headers: {
-                        "content-type": "application/json",
                         To: ticket.email,
                         Name: ticket.name,
+                        "Content-Type": "application/octet-stream",
+                        "no-cors": "true",
+                        "Access-Control-Request-Method": "POST",
                     },
                 }
             )
