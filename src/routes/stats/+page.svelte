@@ -46,7 +46,7 @@
 
         const res = await window.fetch(
             dev
-                ? `http://${$page.url.hostname}:8080/stats`
+                ? `http://${$page.url.hostname}:3000/stats`
                 : `${import.meta.env.VITE_EMAIL_URL}/stats`,
             {
                 headers: {
@@ -104,12 +104,12 @@
                 ticket.Merch
                     ? `${
                           dev
-                              ? `http://${$page.url.hostname}:8080`
+                              ? `http://${$page.url.hostname}:3000`
                               : import.meta.env.VITE_EMAIL_URL
                       }/bundlingpdf`
                     : `${
                           dev
-                              ? `http://${$page.url.hostname}:8080`
+                              ? `http://${$page.url.hostname}:3000`
                               : import.meta.env.VITE_EMAIL_URL
                       }/ticketpdf`,
                 {

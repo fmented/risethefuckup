@@ -14,7 +14,7 @@
         const res: { data: Ticket | null; error: string } = await (
             await window.fetch(
                 dev
-                    ? `http://${$page.url.hostname}:8080/ticket-get`
+                    ? `http://${$page.url.hostname}:3000/ticket-get`
                     : `${import.meta.env.VITE_EMAIL_URL}/ticket-get`,
                 {
                     headers: {
@@ -35,7 +35,7 @@
 
         await window.fetch(
             dev
-                ? `http://${$page.url.hostname}:8080/ticket-up`
+                ? `http://${$page.url.hostname}:3000/ticket-up`
                 : `${import.meta.env.VITE_EMAIL_URL}/ticket-up`,
             {
                 headers: {

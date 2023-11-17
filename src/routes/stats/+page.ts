@@ -4,7 +4,7 @@
 // /** @type {import('./$types').PageLoad} */
 // export async function load({ params, fetch }) {
 
-//     const res = await fetch(dev ? "http://localhost:8080/stats" : `${import.meta.env.VITE_EMAIL_URL}/stats`, {
+//     const res = await fetch(dev ? "http://localhost:3000/stats" : `${import.meta.env.VITE_EMAIL_URL}/stats`, {
 //         headers: {
 //             "content-type": "application/json",
 //             "no-cors": "true",

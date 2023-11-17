@@ -14,7 +14,7 @@
         const res: { data: Merch | null; error: string } = await (
             await window.fetch(
                 dev
-                    ? `http://${$page.url.hostname}:8080/merch-get`
+                    ? `http://${$page.url.hostname}:3000/merch-get`
                     : `${import.meta.env.VITE_EMAIL_URL}/merch-get`,
                 {
                     headers: {
@@ -37,7 +37,7 @@
 
         await window.fetch(
             dev
-                ? `http://${$page.url.hostname}:8080/merch-up`
+                ? `http://${$page.url.hostname}:3000/merch-up`
                 : `${import.meta.env.VITE_EMAIL_URL}/merch-up`,
             {
                 headers: {

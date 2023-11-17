@@ -70,12 +70,12 @@
                 data.Merch
                     ? `${
                           dev
-                              ? `http://${$page.url.hostname}:8080`
+                              ? `http://${$page.url.hostname}:3000`
                               : import.meta.env.VITE_EMAIL_URL
                       }/bundlingpdf`
                     : `${
                           dev
-                              ? `http://${$page.url.hostname}:8080`
+                              ? `http://${$page.url.hostname}:3000`
                               : import.meta.env.VITE_EMAIL_URL
                       }/ticketpdf`,
                 {
@@ -99,12 +99,12 @@
                 bundling
                     ? `${
                           dev
-                              ? `http://${$page.url.hostname}:8080`
+                              ? `http://${$page.url.hostname}:3000`
                               : import.meta.env.VITE_EMAIL_URL
                       }/order-bundling`
                     : `${
                           dev
-                              ? `http://${$page.url.hostname}:8080`
+                              ? `http://${$page.url.hostname}:3000`
                               : import.meta.env.VITE_EMAIL_URL
                       }/order-ticket`,
                 {
