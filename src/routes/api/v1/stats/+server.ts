@@ -8,7 +8,7 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
         return new Response(JSON.stringify({ tickets }));
     } catch (error) {
         console.log(error)
+        return new Response(JSON.stringify({ error: error }));
     }
 
-    return new Response(JSON.stringify({ error: "Unknown QrCode" }));
 }
