@@ -5,33 +5,46 @@
     import ErrorDisplayer from "$lib/ErrorDisplayer.svelte";
     import type { APIResponse, CheckReturn, Ticket } from "$lib";
     import { slide } from "svelte/transition";
+    import { dev } from "$app/environment";
+    import { page } from "$app/stores";
 
-    let data: Awaited<APIResponse<CheckReturn<Ticket>>> = null;
+    let data: Ticket | null | { error: string } = null;
 
     async function onScanSuccess(decodedText: string) {
-        const res: Awaited<APIResponse<CheckReturn<Ticket>>> = await (
-            await window.fetch(`/api/v1/check`, {
-                body: JSON.stringify({ qr: decodedText }),
-                method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                },
-            })
+        const res: { data: Ticket | null; error: string } = await (
+            await window.fetch(
+                dev
+                    ? `http://${$page.url.hostname}:8080/ticket-get`
+                    : `${import.meta.env.VITE_EMAIL_URL}/ticket-get`,
+                {
+                    headers: {
+                        "content-type": "application/json",
+                        qr: decodedText,
+                        "no-cors": "true",
+                    },
+                }
+            )
         ).json();
 
-        data = res;
+        if (res.data) data = res.data;
+        else data = { error: "Unknown Qr Code" };
     }
 
     async function ok(ticket: Ticket) {
         if (!ticket.valid) return (data = null);
 
-        await window.fetch(`/api/v1/check-in`, {
-            body: JSON.stringify(ticket),
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-            },
-        });
+        await window.fetch(
+            dev
+                ? `http://${$page.url.hostname}:8080/ticket-up`
+                : `${import.meta.env.VITE_EMAIL_URL}/ticket-up`,
+            {
+                headers: {
+                    "content-type": "application/json",
+                    qr: ticket.qr,
+                    "no-cors": "true",
+                },
+            }
+        );
 
         data = null;
     }

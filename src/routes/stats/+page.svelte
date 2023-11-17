@@ -5,6 +5,7 @@
     import { generateReceipt, generateTicket } from "$lib";
     import type { PageData } from "./$types";
     import { dev } from "$app/environment";
+    import { page } from "$app/stores";
 
     function blob2uri(b: Blob): Promise<string> {
         return new Promise((res) => {
@@ -34,19 +35,39 @@
         e.preventDefault();
     }
 
-    onMount(() => {
+    let data: Array<Ticket & { Merch: Merch | null }> = [];
+
+    onMount(async () => {
         w = window as GW & typeof window;
         pdf = w.PDFDocument;
         a.forEach((_a) => {
             _a.addEventListener("click", noaction);
         });
-    });
 
-    export let data: PageData = { data: [] };
+        const res = await window.fetch(
+            dev
+                ? `http://${$page.url.hostname}:8080/stats`
+                : `${import.meta.env.VITE_EMAIL_URL}/stats`,
+            {
+                headers: {
+                    "content-type": "application/json",
+                    "no-cors": "true",
+                },
+            }
+        );
+        const json = (await res.json()) as {
+            data: Array<Ticket & { Merch: Merch | null }>;
+            error: string | null;
+        };
+
+        // console.log($page.url);
+
+        data = json.data;
+    });
 
     type Unwrap<A> = A extends unknown[] ? Unwrap<A[number]> : A;
 
-    async function click(d: Unwrap<PageData["data"]>, i: number) {
+    async function click(d: Unwrap<typeof data>, i: number) {
         pdf = w.PDFDocument;
         if (pdf == undefined) return;
         loading = true;
@@ -75,21 +96,18 @@
         });
     }
 
-    async function sendEmail(
-        ticket: Unwrap<PageData["data"]>,
-        pdf: ArrayBuffer
-    ) {
+    async function sendEmail(ticket: Unwrap<typeof data>, pdf: ArrayBuffer) {
         return await (
-            await fetch(
+            await window.fetch(
                 ticket.Merch
                     ? `${
                           dev
-                              ? "http://localhost:8080"
+                              ? `http://${$page.url.hostname}:8080`
                               : import.meta.env.VITE_EMAIL_URL
                       }/bundlingpdf`
                     : `${
                           dev
-                              ? "http://localhost:8080"
+                              ? `http://${$page.url.hostname}:8080`
                               : import.meta.env.VITE_EMAIL_URL
                       }/ticketpdf`,
                 {
@@ -107,7 +125,7 @@
         ).json();
     }
 
-    async function resend(d: Unwrap<PageData["data"]>) {
+    async function resend(d: Unwrap<typeof data>) {
         if (pdf == undefined) return;
         loading = true;
         text = "Preparing PDF";
@@ -142,38 +160,44 @@
     <div class="main">
         <div>
             <h1>Ticket</h1>
-            <small>{data?.data?.length || 0} Rows</small>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Merch</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {#each data?.data || [] as r, i}
+            {#if data.length == 0}
+                <strong>Loading Data....</strong>
+            {:else}
+                <small>{data?.length || 0} Rows</small>
+                <table>
+                    <thead>
                         <tr>
-                            <td
-                                on:contextmenu|preventDefault={() =>
-                                    click(r, i)}
-                            >
-                                <a bind:this={a[i]} href="/{r.name}_{r.id}.pdf"
-                                    >{r.id}</a
-                                ></td
-                            >
-                            <td>{r.name}</td>
-                            <td
-                                on:contextmenu|preventDefault={() => resend(r)}
-                                style="word-break: break-all;"
-                                ><span>{r.email}</span></td
-                            >
-                            <td>{r.Merch?.size ? r.Merch.size : "-"}</td>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Merch</th>
                         </tr>
-                    {/each}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {#each data as r, i}
+                            <tr>
+                                <td
+                                    on:contextmenu|preventDefault={() =>
+                                        click(r, i)}
+                                >
+                                    <a
+                                        bind:this={a[i]}
+                                        href="/{r.name}_{r.id}.pdf">{r.id}</a
+                                    ></td
+                                >
+                                <td>{r.name}</td>
+                                <td
+                                    on:contextmenu|preventDefault={() =>
+                                        resend(r)}
+                                    style="word-break: break-all;"
+                                    ><span>{r.email}</span></td
+                                >
+                                <td>{r.Merch?.size ? r.Merch.size : "-"}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            {/if}
         </div>
     </div>
 </div>

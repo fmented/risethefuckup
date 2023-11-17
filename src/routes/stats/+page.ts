@@ -1,13 +1,23 @@
-import type { Merch, Ticket } from "$lib"
+// import { dev } from "$app/environment"
+// import type { Merch, Ticket } from "$lib"
 
-/** @type {import('./$types').PageLoad} */
-export async function load({ params, fetch }) {
+// /** @type {import('./$types').PageLoad} */
+// export async function load({ params, fetch }) {
 
-    const res = await fetch("/api/v1/stats")
-    const data = await res.json()
+//     const res = await fetch(dev ? "http://localhost:8080/stats" : `${import.meta.env.VITE_EMAIL_URL}/stats`, {
+//         headers: {
+//             "content-type": "application/json",
+//             "no-cors": "true",
+//         }
+//     })
+//     const data = await res.json() as {
+//         data: Array<(Ticket & { Merch: Merch | null })>;
+//         error: string | null;
+//     }
 
+//     console.log(data);
 
-    return {
-        data: data.tickets as Array<Ticket & { Merch: Merch | null }>
-    }
-}
+//     return {
+//         data: data.data
+//     }
+// }

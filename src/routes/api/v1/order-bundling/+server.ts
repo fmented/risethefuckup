@@ -3,7 +3,6 @@ import type { MerchSize } from '@prisma/client';
 import type { RequestHandler } from '@sveltejs/kit';
 
 export const POST: RequestHandler = async ({ request }) => {
-
     try {
         const data: { name: string, size: MerchSize, email: string } = await request.json()
         const merch = await model.merch.create({

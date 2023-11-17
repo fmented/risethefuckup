@@ -5,11 +5,16 @@
     import { generateReceipt, generateTicket } from "$lib";
     import { onMount } from "svelte";
     import { dev } from "$app/environment";
+    import { page } from "$app/stores";
 
     interface GW {
         PDFDocument: PDFKit.PDFDocument;
         SVGO: { optimize: (s: string) => string };
     }
+
+    type Data = Ticket & { Merch: Merch | null };
+
+    type ResData = { data: Data; error: string | null };
 
     let w: GW & typeof window;
     let pdf: PDFKit.PDFDocument;
@@ -59,30 +64,18 @@
         });
     }
 
-    async function sendEmail(
-        data:
-            | (Merch & {
-                  valid: boolean;
-                  ticket: Ticket & {
-                      valid: boolean;
-                      name: string | undefined;
-                      Merch: Merch;
-                  };
-              })
-            | (Ticket & { valid: boolean; name: string }),
-        pdf: ArrayBufferLike
-    ) {
+    async function sendEmail(data: Data, pdf: ArrayBufferLike) {
         return await (
             await fetch(
-                "ticketId" in data
+                data.Merch
                     ? `${
                           dev
-                              ? "http://localhost:8080"
+                              ? `http://${$page.url.hostname}:8080`
                               : import.meta.env.VITE_EMAIL_URL
                       }/bundlingpdf`
                     : `${
                           dev
-                              ? "http://localhost:8080"
+                              ? `http://${$page.url.hostname}:8080`
                               : import.meta.env.VITE_EMAIL_URL
                       }/ticketpdf`,
                 {
@@ -100,6 +93,36 @@
         ).json();
     }
 
+    async function create(): Promise<ResData> {
+        return await (
+            await fetch(
+                bundling
+                    ? `${
+                          dev
+                              ? `http://${$page.url.hostname}:8080`
+                              : import.meta.env.VITE_EMAIL_URL
+                      }/order-bundling`
+                    : `${
+                          dev
+                              ? `http://${$page.url.hostname}:8080`
+                              : import.meta.env.VITE_EMAIL_URL
+                      }/order-ticket`,
+                {
+                    body: JSON.stringify({
+                        name,
+                        size,
+                        email,
+                    }),
+                    method: "POST",
+                    headers: {
+                        "content-type": "application/json",
+                        "no-cors": "true",
+                    },
+                }
+            )
+        ).json();
+    }
+
     async function order() {
         if (!good) return;
         pdf = w.PDFDocument;
@@ -108,120 +131,69 @@
         loading = true;
         process = "Creating Data";
 
-        try {
-            const data:
-                | (Merch & {
-                      valid: boolean;
-                      ticket: Ticket & {
-                          valid: boolean;
-                          name: string | undefined;
-                          Merch: Merch;
-                      };
-                  })
-                | (Ticket & { valid: boolean; name: string })
-                | { error: string } = await (
-                await fetch(
-                    bundling
-                        ? "/api/v1/order-bundling"
-                        : `/api/v1/order-ticket`,
-                    {
-                        body: JSON.stringify({
-                            name,
-                            size,
-                            email,
-                        }),
-                        method: "POST",
-                        headers: {
-                            "content-type": "application/json",
-                        },
-                    }
-                )
-            ).json();
+        let createResult: ResData = await create();
 
-            messages = [
-                ...messages,
-                "error" in data
-                    ? "Error when creating data"
-                    : "Done creating data",
-            ];
+        if (createResult.error) {
+            messages = [...messages, "Error when creating data"];
+            console.log(createResult.error);
+            process = "";
+            return;
+        } else {
+            messages = [...messages, "Done creating data"];
+        }
+        process = "Generating PDF";
 
-            if ("error" in data) return;
+        let blob: Blob;
+        let _pdf: ArrayBufferLike;
 
-            process = "Generating PDF";
+        if (createResult.data.Merch) {
+            blob = await generateReceipt(
+                { ...createResult.data.Merch, ticket: createResult.data },
+                pdf
+            );
+            _pdf = await blob.arrayBuffer();
+        } else {
+            blob = await generateTicket(createResult.data, pdf);
+            _pdf = await blob.arrayBuffer();
+        }
 
-            let blob: Blob;
-            let _pdf: ArrayBufferLike;
+        if (_pdf) {
+            messages = [...messages, "Done generating pdf"];
+        } else {
+            messages = [...messages, "Error when generating pdf"];
+        }
 
-            if ("ticketId" in data && typeof data.name === "string") {
-                blob = await generateReceipt(data, pdf);
-                _pdf = await blob.arrayBuffer();
-            } else {
-                blob = await generateTicket(data, pdf);
-                _pdf = await blob.arrayBuffer();
-            }
+        process = "Sending PDF";
 
-            messages = [
-                ...messages,
-                _pdf == undefined
-                    ? "Error when generating PDF"
-                    : "Done generating pdf",
-            ];
+        fillename = `${createResult.data.name}_${createResult.data.id}`;
 
-            process = "Sending PDF";
-
-            fillename =
-                "ticketId" in data
-                    ? `${name}_${data.ticketId}`
-                    : `${name}_${data.id}`;
-
-            let res: { status: string } | undefined = await sendEmail(
-                data,
-                _pdf
+        navigator.serviceWorker.ready.then(async (reg) => {
+            reg.active?.postMessage(
+                JSON.stringify({
+                    cmd: "download-pdf",
+                    data: await blob2uri(blob),
+                })
             );
 
-            messages = [
-                ...messages,
-                res && res.status == "Failed"
-                    ? "Error when sending PDF"
-                    : "Done sending pdf",
-            ];
-
-            if (res?.status == "Failed") {
-                retrySend = {
-                    show: true,
-                    callback: async function () {
-                        const msg = messages;
-                        msg.pop();
-                        messages = msg;
-                        res = await sendEmail(data, _pdf);
-                        if (res?.status != "Failed") {
-                            retrySend = null;
-                        }
-                    },
-                };
-            }
-
-            navigator.serviceWorker.ready.then(async (reg) => {
-                reg.active?.postMessage(
-                    JSON.stringify({
-                        cmd: "download-pdf",
-                        data: await blob2uri(blob),
-                    })
-                );
-
-                navigator.serviceWorker.addEventListener("message", (e) => {
-                    if (e.data == "pdf-ready") {
-                        download = { ...download, show: true };
-                    }
-                });
+            navigator.serviceWorker.addEventListener("message", (e) => {
+                if (e.data == "pdf-ready") {
+                    download = { ...download, show: true };
+                }
             });
-        } catch (error) {
-            messages = [...messages, "Coudn't Create Order"];
-            retryCreate = { show: true, callback: order };
+        });
+
+        let res: { status: string } | undefined = await sendEmail(
+            createResult.data,
+            _pdf
+        );
+
+        if (res?.status == "Failed") {
+            messages = [...messages, "Error when sending pdf"];
+        } else {
+            messages = [...messages, "Done sending pdf"];
         }
 
         process = "";
-        retryCreate = null;
     }
 </script>
 

@@ -5,33 +5,48 @@
     import ErrorDisplayer from "$lib/ErrorDisplayer.svelte";
     import type { APIResponse, CheckReturn, Merch } from "$lib";
     import { slide } from "svelte/transition";
+    import { dev } from "$app/environment";
+    import { page } from "$app/stores";
 
-    let data: Awaited<APIResponse<CheckReturn<Merch>>> = null;
+    let data: Merch | null | { error: string } = null;
 
     async function onScanSuccess(decodedText: string) {
-        const res: Awaited<APIResponse<CheckReturn<Merch>>> = await (
-            await window.fetch(`/api/v1/check-merch`, {
-                body: JSON.stringify({ qr: decodedText }),
-                method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                },
-            })
+        const res: { data: Merch | null; error: string } = await (
+            await window.fetch(
+                dev
+                    ? `http://${$page.url.hostname}:8080/merch-get`
+                    : `${import.meta.env.VITE_EMAIL_URL}/merch-get`,
+                {
+                    headers: {
+                        "content-type": "application/json",
+                        qr: decodedText,
+                        "no-cors": "true",
+                    },
+                }
+            )
         ).json();
 
-        data = res;
+        if (res.data) data = res.data;
+        else {
+            data = { error: "Unknown Qr Code" };
+        }
     }
 
-    async function ok(ticket: Merch) {
-        if (!ticket.valid) return (data = null);
+    async function ok(merch: Merch) {
+        if (!merch.valid) return (data = null);
 
-        await window.fetch(`/api/v1/claim`, {
-            body: JSON.stringify(ticket),
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-            },
-        });
+        await window.fetch(
+            dev
+                ? `http://${$page.url.hostname}:8080/merch-up`
+                : `${import.meta.env.VITE_EMAIL_URL}/merch-up`,
+            {
+                headers: {
+                    "content-type": "application/json",
+                    qr: merch.qr,
+                    "no-cors": "true",
+                },
+            }
+        );
 
         data = null;
     }
