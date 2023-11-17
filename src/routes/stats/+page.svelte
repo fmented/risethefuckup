@@ -77,7 +77,7 @@
 
     let text: string = "";
 
-    let data: Array<Ticket & { Merch: Merch | null }> = [];
+    let data: Array<Ticket & { Merch: Merch | null }> | null = null;
 
     onMount(async () => {
         w = window as GW & typeof window;
@@ -108,7 +108,10 @@
 
     type Unwrap<A> = A extends unknown[] ? Unwrap<A[number]> : A;
 
-    async function sendEmail(ticket: Unwrap<typeof data>, pdf: ArrayBuffer) {
+    async function sendEmail(
+        ticket: Unwrap<Ticket & { Merch: Merch | null }>,
+        pdf: ArrayBuffer
+    ) {
         return await (
             await window.fetch(
                 ticket.Merch
@@ -138,7 +141,7 @@
     }
 
     async function resend(d: Unwrap<typeof data>, e: Event) {
-        if (pdf == undefined) return;
+        if (pdf == undefined || !d) return;
         loading = true;
         text = "Preparing PDF";
         const target = e.target as HTMLSpanElement;
@@ -176,8 +179,10 @@
     <div class="main">
         <div>
             <h1>Ticket</h1>
-            {#if data.length == 0}
-                <strong>Loading Data....</strong>
+            {#if !data}
+                <strong>Fetching Data....</strong>
+            {:else if data.length == 0}
+                <strong>{"Data Is Empty :("}</strong>
             {:else}
                 <small>{data?.length || 0} Rows</small>
                 <table>
@@ -246,6 +251,12 @@
 
     small {
         margin-bottom: 0.5rem;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+    }
+
+    strong,
+    h1 {
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
     span {
