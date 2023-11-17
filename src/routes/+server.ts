@@ -11,10 +11,12 @@ export const POST: RequestHandler = async ({ cookies, request, }) => {
 
         if (passcode === import.meta.env.VITE_PASSCODE) {
             const token = jwt.sign({
-                data: { passcode: import.meta.env.VITE_PASSCODE, since: Date.now() }
+                data: { passcode: import.meta.env.VITE_PASSCODE, since: Date.now() },
             }, import.meta.env.VITE_SECRET, {});
 
-            cookies.set("passcode", token)
+            cookies.set("passcode", token, {
+                maxAge: 60 * 60 * 24 * 3
+            })
 
             return new Response(JSON.stringify({ status: "Success" }), {
                 status: 302,

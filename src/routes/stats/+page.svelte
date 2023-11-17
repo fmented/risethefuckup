@@ -3,19 +3,50 @@
     import Header from "$lib/Header.svelte";
     import { onMount } from "svelte";
     import { generateReceipt, generateTicket } from "$lib";
-    import type { PageData } from "./$types";
     import { dev } from "$app/environment";
     import { page } from "$app/stores";
 
-    function blob2uri(b: Blob): Promise<string> {
-        return new Promise((res) => {
-            const reader = new FileReader();
-            reader.onloadend = function () {
-                var base64data = reader.result;
-                res(base64data as string);
-            };
-            reader.readAsDataURL(b);
-        });
+    async function download(ticket: Ticket & { Merch: Merch | null }) {
+        pdf = w.PDFDocument;
+        if (pdf == undefined) return;
+        loading = true;
+        text = "Preparing PDF for download";
+        let blob: Blob;
+
+        if (ticket.Merch) {
+            blob = await generateReceipt(
+                { ...ticket.Merch, ticket: ticket },
+                pdf
+            );
+        } else {
+            blob = await generateTicket(ticket, pdf);
+        }
+
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: `${ticket.name}_${ticket.id}.pdf`,
+                types: [
+                    {
+                        accept: {
+                            "application/pdf": [".pdf"],
+                        },
+                        description: "Document",
+                    },
+                ],
+            });
+            text = "Download is starting";
+            const wstream = await handle.createWritable();
+            await wstream.write(blob);
+            await wstream.close();
+
+            text = "Download is completed";
+
+            setTimeout(() => {
+                loading = false;
+            }, 1000);
+        } catch (error) {
+            loading = false;
+        }
     }
 
     interface GW {
@@ -29,20 +60,11 @@
 
     let text: string = "";
 
-    let a: HTMLAnchorElement[] = [];
-
-    function noaction(e: Event) {
-        e.preventDefault();
-    }
-
     let data: Array<Ticket & { Merch: Merch | null }> = [];
 
     onMount(async () => {
         w = window as GW & typeof window;
         pdf = w.PDFDocument;
-        a.forEach((_a) => {
-            _a.addEventListener("click", noaction);
-        });
 
         const res = await window.fetch(
             dev
@@ -69,35 +91,6 @@
 
     type Unwrap<A> = A extends unknown[] ? Unwrap<A[number]> : A;
 
-    async function click(d: Unwrap<typeof data>, i: number) {
-        pdf = w.PDFDocument;
-        if (pdf == undefined) return;
-        loading = true;
-        text = "Preparing PDF for download";
-        let blob = d.Merch
-            ? await generateReceipt({ ...d.Merch, ticket: d }, pdf)
-            : await generateTicket(d, pdf);
-
-        let uri = await blob2uri(blob);
-
-        navigator.serviceWorker.ready.then((reg) => {
-            reg.active?.postMessage(
-                JSON.stringify({ cmd: "download-pdf", data: uri })
-            );
-            navigator.serviceWorker.addEventListener("message", (e) => {
-                if (e.data == "pdf-ready") {
-                    a[i].removeEventListener("click", noaction);
-                    a[i].click();
-                    a[i].addEventListener("click", noaction);
-                    text = "Download is starting";
-                    setTimeout(() => {
-                        loading = false;
-                    }, 1000);
-                }
-            });
-        });
-    }
-
     async function sendEmail(ticket: Unwrap<typeof data>, pdf: ArrayBuffer) {
         return await (
             await window.fetch(
@@ -118,7 +111,7 @@
                     headers: {
                         To: ticket.email,
                         Name: ticket.name,
-                        "Content-Type": "application/octet-stream",
+                        "Content-Type": "application/pdf",
                         "no-cors": "true",
                         "Access-Control-Request-Method": "POST",
                     },
@@ -176,16 +169,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#each data as r, i}
+                        {#each data as r}
                             <tr>
                                 <td
                                     on:contextmenu|preventDefault={() =>
-                                        click(r, i)}
+                                        download(r)}
                                 >
-                                    <a
-                                        bind:this={a[i]}
-                                        href="/{r.name}_{r.id}.pdf">{r.id}</a
-                                    ></td
+                                    <span> {r.id}</span></td
                                 >
                                 <td>{r.name}</td>
                                 <td
@@ -225,11 +215,6 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         font-size: smaller;
-    }
-
-    a {
-        text-decoration: none;
-        color: #ed7;
     }
 
     small {
