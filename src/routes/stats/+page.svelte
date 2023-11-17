@@ -60,9 +60,11 @@
             error: string | null;
         };
 
-        // console.log($page.url);
-
-        data = json.data;
+        if (json.data) {
+            data = json.data;
+        } else {
+            console.log(json);
+        }
     });
 
     type Unwrap<A> = A extends unknown[] ? Unwrap<A[number]> : A;
