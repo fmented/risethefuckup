@@ -6,8 +6,7 @@
     import { onMount } from "svelte";
     import { dev } from "$app/environment";
     import { page } from "$app/stores";
-    import { error } from "@sveltejs/kit";
-
+    import { supported, fileSave } from "browser-fs-access";
     interface GW {
         PDFDocument: PDFKit.PDFDocument;
         SVGO: { optimize: (s: string) => string };
@@ -33,33 +32,40 @@
     let messages: { error?: boolean; text: string }[] = [];
 
     let loading = false;
-    let fillename = "";
+    let filename = "";
 
     function createCallback(b: Blob) {
         return async function () {
-            if (!fillename) return;
+            if (!filename) return;
             // window.location.pathname = `/download-pdf`;
-            try {
-                const handle = await window.showSaveFilePicker({
-                    suggestedName: fillename,
-                    types: [
-                        {
-                            accept: {
-                                "application/pdf": [".pdf"],
+            if (supported) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: filename,
+                        types: [
+                            {
+                                accept: {
+                                    "application/pdf": [".pdf"],
+                                },
+                                description: "Document",
                             },
-                            description: "Document",
-                        },
-                    ],
+                        ],
+                    });
+                    const wstream = await handle.createWritable();
+                    await wstream.write(b);
+                    await wstream.close();
+                    name = "";
+                    size = "";
+                    email = "";
+                    process = "";
+                    loading = false;
+                } catch (error) {}
+            } else {
+                fileSave(b, {
+                    fileName: filename,
+                    extensions: [".pdf"],
                 });
-                const wstream = await handle.createWritable();
-                await wstream.write(b);
-                await wstream.close();
-                name = "";
-                size = "";
-                email = "";
-                process = "";
-                loading = false;
-            } catch (error) {}
+            }
         };
     }
 
@@ -217,7 +223,7 @@
         retryGenerate = null;
         process = "Sending PDF";
 
-        fillename = `${createResult.data.name}_${createResult.data.id}.pdf`;
+        filename = `${createResult.data.name}_${createResult.data.id}.pdf`;
 
         let res: { status: string } | undefined = await sendEmail(
             createResult.data,

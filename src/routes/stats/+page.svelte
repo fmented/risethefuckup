@@ -5,11 +5,18 @@
     import { generateReceipt, generateTicket } from "$lib";
     import { dev } from "$app/environment";
     import { page } from "$app/stores";
+    import { supported, fileSave } from "browser-fs-access";
 
-    async function download(ticket: Ticket & { Merch: Merch | null }) {
+    async function download(
+        ticket: Ticket & { Merch: Merch | null },
+        e: Event
+    ) {
         pdf = w.PDFDocument;
         if (pdf == undefined) return;
         loading = true;
+        const target = e.target as HTMLTableColElement;
+        target.parentElement!.classList.add("info");
+        const filename = `${ticket.name}_${ticket.id}.pdf`;
         text = "Preparing PDF for download";
         let blob: Blob;
 
@@ -22,31 +29,41 @@
             blob = await generateTicket(ticket, pdf);
         }
 
-        try {
-            const handle = await window.showSaveFilePicker({
-                suggestedName: `${ticket.name}_${ticket.id}.pdf`,
-                types: [
-                    {
-                        accept: {
-                            "application/pdf": [".pdf"],
+        if (supported) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [
+                        {
+                            accept: {
+                                "application/pdf": [".pdf"],
+                            },
+                            description: "Document",
                         },
-                        description: "Document",
-                    },
-                ],
-            });
-            text = "Download is starting";
-            const wstream = await handle.createWritable();
-            await wstream.write(blob);
-            await wstream.close();
+                    ],
+                });
 
-            text = "Download is completed";
+                text = "Download is starting";
+                const wstream = await handle.createWritable();
+                await wstream.write(blob);
+                await wstream.close();
 
-            setTimeout(() => {
+                text = "Download is completed";
+
+                setTimeout(() => {
+                    loading = false;
+                }, 1000);
+            } catch (error) {
                 loading = false;
-            }, 1000);
-        } catch (error) {
+            }
+        } else {
+            await fileSave(blob, {
+                fileName: filename,
+                extensions: [".pdf"],
+            });
             loading = false;
         }
+        target.parentElement!.classList.remove("info");
     }
 
     interface GW {
@@ -83,7 +100,7 @@
         };
 
         if (json.data) {
-            data = json.data;
+            data = json.data.filter((i) => i.name != "OTS");
         } else {
             console.log(json);
         }
@@ -120,10 +137,13 @@
         ).json();
     }
 
-    async function resend(d: Unwrap<typeof data>) {
+    async function resend(d: Unwrap<typeof data>, e: Event) {
         if (pdf == undefined) return;
         loading = true;
         text = "Preparing PDF";
+        const target = e.target as HTMLSpanElement;
+        target.parentElement!.classList.add("info");
+
         const blob = d.Merch
             ? await generateReceipt({ ...d.Merch, ticket: d }, pdf)
             : await generateTicket(d, pdf);
@@ -140,6 +160,7 @@
 
         setTimeout(() => {
             loading = false;
+            target.parentElement!.classList.remove("info");
         }, 1000);
     }
 
@@ -171,18 +192,24 @@
                     <tbody>
                         {#each data as r}
                             <tr>
-                                <td
-                                    on:contextmenu|preventDefault={() =>
-                                        download(r)}
-                                >
-                                    <span> {r.id}</span></td
+                                <td>
+                                    <!-- svelte-ignore a11y-no-static-element-interactions -->
+                                    <span
+                                        on:contextmenu|preventDefault|self={(
+                                            e
+                                        ) => download(r, e)}
+                                    >
+                                        {r.id}</span
+                                    ></td
                                 >
                                 <td>{r.name}</td>
-                                <td
-                                    on:contextmenu|preventDefault={() =>
-                                        resend(r)}
-                                    style="word-break: break-all;"
-                                    ><span>{r.email}</span></td
+                                <td style="word-break: break-all;">
+                                    <!-- svelte-ignore a11y-no-static-element-interactions -->
+                                    <span
+                                        on:contextmenu|preventDefault|self={(
+                                            e
+                                        ) => resend(r, e)}>{r.email}</span
+                                    ></td
                                 >
                                 <td>{r.Merch?.size ? r.Merch.size : "-"}</td>
                             </tr>
@@ -224,10 +251,13 @@
     span {
         cursor: pointer;
         user-select: none;
+        margin-inline: 0.25rem;
     }
 
     td {
-        padding: 0.5em;
+        height: 34px;
+        margin: 0;
+        padding: 0;
     }
 
     tr > td:first-of-type {
