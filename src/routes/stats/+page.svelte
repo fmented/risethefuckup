@@ -28,16 +28,25 @@
 
     let text: string = "";
 
+    let a: HTMLAnchorElement[] = [];
+
+    function noaction(e: Event) {
+        e.preventDefault();
+    }
+
     onMount(() => {
         w = window as GW & typeof window;
         pdf = w.PDFDocument;
+        a.forEach((_a) => {
+            _a.addEventListener("click", noaction);
+        });
     });
 
     export let data: PageData = { data: [] };
 
     type Unwrap<A> = A extends unknown[] ? Unwrap<A[number]> : A;
 
-    async function click(d: Unwrap<PageData["data"]>) {
+    async function click(d: Unwrap<PageData["data"]>, i: number) {
         pdf = w.PDFDocument;
         if (pdf == undefined) return;
         loading = true;
@@ -54,7 +63,9 @@
             );
             navigator.serviceWorker.addEventListener("message", (e) => {
                 if (e.data == "pdf-ready") {
-                    window.location.pathname = `/${d.name}_${d.id}.pdf`;
+                    a[i].removeEventListener("click", noaction);
+                    a[i].click();
+                    a[i].addEventListener("click", noaction);
                     text = "Download is starting";
                     setTimeout(() => {
                         loading = false;
@@ -104,8 +115,6 @@
             ? await generateReceipt({ ...d.Merch, ticket: d }, pdf)
             : await generateTicket(d, pdf);
 
-        const uri = await blob2uri(blob);
-
         text = "Re-sending PDF to " + d.email;
 
         const { status } = await sendEmail(d, await blob.arrayBuffer());
@@ -144,10 +153,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {#each data?.data || [] as r}
+                    {#each data?.data || [] as r, i}
                         <tr>
-                            <td on:contextmenu|preventDefault={() => click(r)}>
-                                <span>{r.id}</span></td
+                            <td
+                                on:contextmenu|preventDefault={() =>
+                                    click(r, i)}
+                            >
+                                <a bind:this={a[i]} href="/{r.name}_{r.id}.pdf"
+                                    >{r.id}</a
+                                ></td
                             >
                             <td>{r.name}</td>
                             <td
@@ -185,6 +199,11 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         font-size: smaller;
+    }
+
+    a {
+        text-decoration: none;
+        color: #ed7;
     }
 
     small {

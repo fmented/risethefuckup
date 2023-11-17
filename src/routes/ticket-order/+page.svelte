@@ -158,7 +158,6 @@
             } else {
                 blob = await generateTicket(data, pdf);
                 _pdf = await blob.arrayBuffer();
-                console.log(await blob2uri(blob));
             }
 
             messages = [
