@@ -71,9 +71,10 @@
                             loading = false;
                         }, 1000);
                     })
-                    .finally(() =>
-                        target.parentElement!.classList.remove("info")
-                    );
+                    .finally(() => {
+                        target.parentElement!.classList.remove("info");
+                        trigger.style.textDecoration = "";
+                    });
             }
 
             if (supported) {
@@ -110,7 +111,9 @@
                 });
                 loading = false;
             }
+
             target.parentElement!.classList.remove("info");
+            trigger.style.textDecoration = "";
         }
 
         trigger.addEventListener("click", _d);
