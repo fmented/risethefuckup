@@ -22,10 +22,13 @@
         }
     }
 
-    onMount(() => {
+    function initialize() {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear();
+        }
         if (browser) {
             html5QrcodeScanner = new Html5QrcodeScanner(
-                el.id,
+                "qr-reader",
                 {
                     fps: 10,
                     qrbox: 250,
@@ -38,6 +41,12 @@
 
             html5QrcodeScanner.render(onScanSuccess, undefined);
         }
+    }
+
+    onMount(() => {
+        initialize();
+
+        window.addEventListener("resize", initialize);
     });
 </script>
 

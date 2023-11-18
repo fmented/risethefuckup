@@ -6,13 +6,16 @@
     import { dev } from "$app/environment";
     import { page } from "$app/stores";
     import { supported, fileSave } from "browser-fs-access";
+    import { canShare, share } from "$lib/share";
+    import { fade, fly, slide } from "svelte/transition";
+
+    let trigger: HTMLElement;
 
     async function download(
-        ticket: Ticket & { Merch: Merch | null },
+        ticket: (Ticket & { Merch: Merch | null }) | null,
         e: Event
     ) {
-        pdf = w.PDFDocument;
-        if (pdf == undefined) return;
+        if (!pdf || !ticket) return;
         loading = true;
         const target = e.target as HTMLTableColElement;
         target.parentElement!.classList.add("info");
@@ -21,54 +24,109 @@
         let blob: Blob;
 
         if (ticket.Merch) {
-            blob = await generateReceipt(
-                { ...ticket.Merch, ticket: ticket },
-                pdf
-            );
-        } else {
-            blob = await generateTicket(ticket, pdf);
-        }
-
-        if (supported) {
             try {
-                const handle = await window.showSaveFilePicker({
-                    suggestedName: filename,
-                    types: [
-                        {
-                            accept: {
-                                "application/pdf": [".pdf"],
-                            },
-                            description: "Document",
-                        },
-                    ],
-                });
-
-                text = "Download is starting";
-                const wstream = await handle.createWritable();
-                await wstream.write(blob);
-                await wstream.close();
-
-                text = "Download is completed";
+                blob = await generateReceipt(
+                    { ...ticket.Merch, ticket: ticket },
+                    pdf
+                );
+            } catch (error) {
+                text = (error as Error).message;
 
                 setTimeout(() => {
                     loading = false;
                 }, 1000);
-            } catch (error) {
-                loading = false;
+                return;
             }
         } else {
-            await fileSave(blob, {
-                fileName: filename,
-                extensions: [".pdf"],
-            });
-            loading = false;
+            try {
+                blob = await generateTicket(ticket, pdf);
+            } catch (error) {
+                text = (error as Error).message;
+
+                setTimeout(() => {
+                    loading = false;
+                }, 1000);
+                return;
+            }
         }
-        target.parentElement!.classList.remove("info");
+
+        async function _d() {
+            trigger.removeEventListener("click", _d);
+            if (canShare({ blob, filename })) {
+                text = "Sharing PDF";
+                return share({ blob, filename })
+                    ?.then((_) => {
+                        loading = false;
+                        target.parentElement!.classList.remove("info");
+                    })
+                    .catch((err) => {
+                        text = err.message;
+                        setTimeout(() => {
+                            loading = false;
+                        }, 1000);
+                    })
+                    .finally(() =>
+                        target.parentElement!.classList.remove("info")
+                    );
+            }
+
+            if (supported) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: filename,
+                        types: [
+                            {
+                                accept: {
+                                    "application/pdf": [".pdf"],
+                                },
+                                description: "Document",
+                            },
+                        ],
+                    });
+
+                    text = "Download is starting";
+                    const wstream = await handle.createWritable();
+                    await wstream.write(blob);
+                    await wstream.close();
+
+                    text = "Download is completed";
+
+                    setTimeout(() => {
+                        loading = false;
+                    }, 1000);
+                } catch (error) {
+                    loading = false;
+                }
+            } else {
+                await fileSave(blob, {
+                    fileName: filename,
+                    extensions: [".pdf"],
+                });
+                loading = false;
+            }
+            target.parentElement!.classList.remove("info");
+        }
+
+        trigger.addEventListener("click", _d);
+        text = "Click here to download";
     }
 
     interface GW {
         PDFDocument: PDFKit.PDFDocument;
     }
+
+    // function action(
+    //     node: HTMLElement,
+    //     { ticket }: { ticket: (Ticket & { Merch: Merch | null }) | null }
+    // ) {
+    //     node.addEventListener("click", (e) => download(ticket, e));
+
+    //     return {
+    //         destroy() {
+    //             node.removeEventListener("click", (e) => download(ticket, e));
+    //         },
+    //     };
+    // }
 
     let w: GW & typeof window;
     let pdf: PDFKit.PDFDocument;
@@ -177,15 +235,20 @@
 <div class="fuck">
     <Header />
     <div class="main">
-        <div>
+        <div class="slide">
             <h1>Ticket</h1>
             {#if !data}
-                <strong>Fetching Data....</strong>
+                <div class="min">
+                    <strong> Fetching Data.... </strong>
+                </div>
             {:else if data.length == 0}
-                <strong>{"Data Is Empty :("}</strong>
+                <div class="min" style="animation-delay: 400ms;" />
+                <strong> {"Data Is Empty :("} </strong>
             {:else}
-                <small>{data?.length || 0} Rows</small>
-                <table>
+                <div class="slide">
+                    <strong>{data?.length || 0} Rows</strong>
+                </div>
+                <table class="tick">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -195,7 +258,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#each data as r}
+                        {#each data as r, i}
                             <tr>
                                 <td>
                                     <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -204,10 +267,14 @@
                                             e
                                         ) => download(r, e)}
                                     >
-                                        {r.id}</span
+                                        {r.id.split("-")[0]}</span
                                     ></td
                                 >
-                                <td>{r.name}</td>
+                                <td>
+                                    <span>
+                                        {r.name}
+                                    </span>
+                                </td>
                                 <td style="word-break: break-all;">
                                     <!-- svelte-ignore a11y-no-static-element-interactions -->
                                     <span
@@ -216,7 +283,11 @@
                                         ) => resend(r, e)}>{r.email}</span
                                     ></td
                                 >
-                                <td>{r.Merch?.size ? r.Merch.size : "-"}</td>
+                                <td>
+                                    <span>
+                                        {r.Merch?.size ? r.Merch.size : "-"}
+                                    </span>
+                                </td>
                             </tr>
                         {/each}
                     </tbody>
@@ -228,7 +299,7 @@
 
 {#if loading}
     <div class="overlay">
-        <strong>{text}</strong>
+        <strong bind:this={trigger}>{text}</strong>
     </div>
 {/if}
 
@@ -242,27 +313,24 @@
     }
 
     td {
-        max-width: calc(99vw - 2rem);
+        max-width: calc(24vw - 2rem);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         font-size: smaller;
     }
 
-    small {
-        margin-bottom: 0.5rem;
-        font-family: Verdana, Geneva, Tahoma, sans-serif;
-    }
-
     strong,
     h1 {
         font-family: Verdana, Geneva, Tahoma, sans-serif;
+        user-select: none;
     }
 
     span {
         cursor: pointer;
         user-select: none;
         margin-inline: 0.25rem;
+        font-size: x-small;
     }
 
     td {
@@ -272,12 +340,13 @@
     }
 
     tr > td:first-of-type {
-        text-align: left;
+        /* text-align: left; */
         word-break: break-all;
+        /* max-width: calc(20vw - 2rem); */
     }
 
     table {
-        table-layout: fixed;
+        table-layout: auto;
         width: 100%;
         border-collapse: collapse;
     }
@@ -299,7 +368,7 @@
 
         gap: 2rem;
         height: 100%;
-        padding: 2em;
+        padding: 0.5em;
         background-size: cover;
         background-position-x: 50%;
         background-repeat: no-repeat;
@@ -331,6 +400,21 @@
         font-size: 16px;
         padding: 2em;
     } */
+
+    @keyframes min {
+        0% {
+            transform: translateY(100vh);
+        }
+        100% {
+            transform: translateY(0);
+        }
+    }
+
+    .min {
+        animation-name: min;
+        animation-duration: 1000ms;
+        animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+    }
 
     @media print {
         * {

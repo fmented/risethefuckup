@@ -84,7 +84,7 @@
         height: 100%;
         grid-template-rows: auto 1fr;
         color: #ed7;
-        background-color: #555;
+        background-color: #222;
     }
 
     .fuck > .main {

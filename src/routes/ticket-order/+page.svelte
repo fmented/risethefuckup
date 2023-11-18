@@ -7,6 +7,7 @@
     import { dev } from "$app/environment";
     import { page } from "$app/stores";
     import { supported, fileSave } from "browser-fs-access";
+    import { canShare, share } from "$lib/share";
     interface GW {
         PDFDocument: PDFKit.PDFDocument;
         SVGO: { optimize: (s: string) => string };
@@ -34,10 +35,22 @@
     let loading = false;
     let filename = "";
 
-    function createCallback(b: Blob) {
+    function createCallback(blob: Blob) {
         return async function () {
             if (!filename) return;
             // window.location.pathname = `/download-pdf`;
+
+            if (canShare({ blob, filename })) {
+                return share({ blob, filename })?.then((_) => {
+                    name = "";
+                    size = "";
+                    email = "";
+                    process = "";
+                    bundling = false;
+                    loading = false;
+                });
+            }
+
             if (supported) {
                 try {
                     const handle = await window.showSaveFilePicker({
@@ -52,24 +65,34 @@
                         ],
                     });
                     const wstream = await handle.createWritable();
-                    await wstream.write(b);
+                    await wstream.write(blob);
                     await wstream.close();
                     name = "";
                     size = "";
                     email = "";
                     process = "";
+                    bundling = false;
+
                     loading = false;
                 } catch (error) {}
             } else {
-                fileSave(b, {
+                fileSave(blob, {
                     fileName: filename,
                     extensions: [".pdf"],
+                }).then((_) => {
+                    name = "";
+                    size = "";
+                    email = "";
+                    process = "";
+                    bundling = false;
+
+                    loading = false;
                 });
             }
         };
     }
 
-    let download: RetryButton = {
+    let download: { show: boolean; callback: () => void } = {
         show: false,
         callback: async () => {},
     };
@@ -78,17 +101,6 @@
     let _pdf: ArrayBufferLike;
 
     let process = "";
-
-    type RetryButton = {
-        show: boolean;
-        callback: () => Promise<void>;
-    };
-
-    let i = 0;
-
-    let retryCreate: RetryButton | null = null;
-    let retryGenerate: RetryButton | null = null;
-    let retrySend: RetryButton | null = null;
 
     $: good = bundling ? name && size && email : name && email;
 
@@ -191,12 +203,9 @@
                 { text: "Error when creating data", error: true },
             ];
 
-            retryCreate = { show: true, callback: order };
             process = "";
             return;
         }
-
-        retryCreate = null;
 
         messages = [...messages, { text: "Done creating data" }];
         process = "Generating PDF";
@@ -208,19 +217,12 @@
                 ...messages,
                 { text: "Error when generating pdf", error: true },
             ];
-            retryGenerate = {
-                show: true,
-                callback: async () => {
-                    process = "Generating PDF";
-                    await generate(createResult);
-                },
-            };
+
             process = "";
             return;
         }
 
         messages = [...messages, { text: "Done generating pdf" }];
-        retryGenerate = null;
         process = "Sending PDF";
 
         filename = `${createResult.data.name}_${createResult.data.id}.pdf`;
@@ -238,20 +240,11 @@
                 { text: "Error when sending pdf", error: true },
             ];
 
-            retrySend = {
-                show: true,
-                callback: async () => {
-                    process = "Sending PDF";
-                    await sendEmail(createResult.data, _pdf);
-                },
-            };
             process = "";
             return;
         }
 
         messages = [...messages, { text: "Done sending pdf" }];
-
-        retrySend = null;
 
         name = "";
         size = "";
@@ -265,7 +258,7 @@
 <div class="fuck">
     <Header />
     <div class="main">
-        <form>
+        <form class="slide">
             {#if loading}
                 {#each messages as e, i}
                     <div class="in" class:error={e.error} class:info={!e.error}>
@@ -309,7 +302,7 @@
                 </div>
                 <div class="in">
                     <label for="email">Email</label>
-                    <input type="text" bind:value={email} id="email" />
+                    <input type="email" bind:value={email} id="email" />
                 </div>
                 <div class="cb">
                     <label for="bundling">Bundling</label>
@@ -320,7 +313,7 @@
                     />
                 </div>
                 {#if bundling}
-                    <div class="in">
+                    <div class="in" transition:slide>
                         <label for="size">Size</label>
                         <select name="size" id="size" bind:value={size}>
                             <option value="" disabled>Select Size</option>
@@ -347,7 +340,7 @@
         height: 100%;
         grid-template-rows: auto 1fr;
         color: #ed7;
-        background-color: #555;
+        background-color: #222;
     }
 
     .fuck > .main {
@@ -382,7 +375,34 @@
 
     [type="checkbox"] {
         width: auto;
-        padding: 2em;
+        -webkit-appearance: none;
+        appearance: none;
+        font: inherit;
+        color: white;
+        margin-inline-start: 1em;
+        width: 1.15em;
+        height: 1.15em;
+        border: 0.15em solid currentColor;
+        border-radius: 0.15em;
+        transform: translateY(-0.075em);
+        display: grid;
+        padding: 0;
+        place-content: center;
+        background-color: white;
+    }
+
+    input[type="checkbox"]::before {
+        content: "";
+        width: 0.8em;
+        height: 0.8em;
+        transform: scale(0);
+        background-color: #ed7;
+        transition: 120ms transform ease-in-out;
+        box-shadow: inset 1em 1em var(--form-control-color);
+    }
+
+    input[type="checkbox"]:checked::before {
+        transform: scale(1);
     }
 
     form > #download-button.in {
@@ -407,13 +427,14 @@
         gap: 2em;
         background-color: #555;
         padding-bottom: 4rem;
+        border-radius: 1rem;
     }
 
     button {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
+        bottom: 1px;
+        left: 1px;
+        right: 1px;
         text-align: center;
         font-family: Verdana, Tahoma, sans-serif;
     }

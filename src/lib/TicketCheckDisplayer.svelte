@@ -42,7 +42,7 @@
             <input
                 type="text"
                 value={valid ? "Unused" : `Used`}
-                disabled
+                readonly
                 id="status"
                 class:error={!inverse ? !valid : valid}
                 class:ok={!inverse ? valid : !valid}
@@ -53,7 +53,7 @@
     {#if name != undefined}
         <div>
             <label for="name">Name</label>
-            <input type="text" value={name} disabled id="name" />
+            <input type="text" value={name} readonly id="name" />
         </div>
     {/if}
 
@@ -63,7 +63,7 @@
             <input
                 type="datetime"
                 value={f.format(new Date(checkInAt))}
-                disabled
+                readonly
                 id="date"
             />
         </div>

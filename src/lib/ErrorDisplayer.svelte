@@ -8,7 +8,7 @@
     {#if error}
         <div>
             <label for="error">Error</label>
-            <input value={error} disabled id="error" class="error" />
+            <input value={error} readonly id="error" class="error" />
         </div>
     {/if}
 </form>

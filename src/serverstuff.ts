@@ -1,23 +1,7 @@
 import { PrismaClient, type Ticket as T, type Merch as M } from '@prisma/client'
 
 import { randomBytes } from 'crypto'
-import blobstream from "blob-stream"
 const prisma = new PrismaClient()
-import pdf from "pdfkit"
-import QRCode from "qrcode-svg"
-import s2p from "svg-to-pdfkit"
-import { receiptNotes, ticketNotes } from '$lib/notes'
-import { fontBlob } from '$lib/font'
-
-function dataUrItoBlob(dataUri: string) {
-  var binary = atob(dataUri.split(',')[1]);
-  var array = [];
-  for (var i = 0; i < binary.length; i++) {
-    array.push(binary.charCodeAt(i));
-  }
-  return new Blob([new Uint8Array(array)], { type: "font/ttf" });
-};
-
 
 export function qr() {
   const qr = randomBytes(12).toString('hex')

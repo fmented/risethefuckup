@@ -62,12 +62,18 @@
     <div class="main">
         {#if data}
             {#if "qr" in data}
-                <ResponseDisplayer merch={data} />
+                <div transition:slide>
+                    <ResponseDisplayer merch={data} />
+                </div>
             {:else}
-                <ErrorDisplayer {data} />
+                <div transition:slide>
+                    <ErrorDisplayer {data} />
+                </div>
             {/if}
         {:else}
-            <Scanner on:scan={(e) => onScanSuccess(e.detail)} />
+            <div transition:slide>
+                <Scanner on:scan={(e) => onScanSuccess(e.detail)} />
+            </div>
         {/if}
     </div>
 
@@ -86,7 +92,7 @@
         height: 100%;
         grid-template-rows: auto 1fr;
         color: #ed7;
-        background-color: #555;
+        background-color: #222;
     }
 
     .fuck > .main {

@@ -20,9 +20,9 @@ export const POST: RequestHandler = async ({ cookies, request, }) => {
 
             return new Response(JSON.stringify({ status: "Success" }), {
                 status: 302,
-                statusText: "/check-in",
+                statusText: "/stats",
                 headers: {
-                    Location: "/check-in"
+                    Location: "/stats"
                 }
             });
 

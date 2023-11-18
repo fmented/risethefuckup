@@ -45,7 +45,7 @@
             <input
                 type="text"
                 value={valid ? "Unredeemed" : `Redeemed`}
-                disabled
+                readonly
                 id="status"
                 class:error={!inverse ? !valid : valid}
                 class:ok={!inverse ? valid : !valid}
@@ -56,14 +56,14 @@
     {#if name}
         <div>
             <label for="name">Nama</label>
-            <input type="text" value={`${name}`} disabled id="name" />
+            <input type="text" value={`${name}`} readonly id="name" />
         </div>
     {/if}
 
     {#if size}
         <div>
             <label for="size">Size</label>
-            <input type="text" value={`${size}`} disabled id="size" />
+            <input type="text" value={`${size}`} readonly id="size" />
         </div>
     {/if}
 
@@ -73,7 +73,7 @@
             <input
                 type="datetime"
                 value={f.format(new Date(claimedAt))}
-                disabled
+                readonly
                 id="date"
             />
         </div>

@@ -10,6 +10,6 @@ export async function load({ cookies, fetch, request }) {
     const passcode = data?.passcode
 
     if (passcode === import.meta.env.VITE_PASSCODE)
-        throw redirect(301, "/check-in")
+        throw redirect(301, "/stats")
     return {}
 }

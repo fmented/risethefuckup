@@ -7430,3 +7430,4 @@ export async function generateTicket(data: { name: string | null, qr: string, id
     })
   })
 }
+
