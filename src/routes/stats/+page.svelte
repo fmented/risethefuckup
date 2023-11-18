@@ -358,8 +358,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#each data as r (r)}
-                            <tr animate:flip={{ duration: 800 }}>
+                        {#each data as r, i (r)}
+                            <tr
+                                animate:flip={{
+                                    duration: 300 + 30 * i,
+                                    delay: 20 * i,
+                                }}
+                            >
                                 <td>
                                     <!-- svelte-ignore a11y-no-static-element-interactions -->
                                     <span
