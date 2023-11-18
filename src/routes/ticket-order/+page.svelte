@@ -35,6 +35,10 @@
     let loading = false;
     let filename = "";
 
+    $: if (bundling == false) {
+        size = "";
+    }
+
     function createCallback(blob: Blob) {
         return async function () {
             if (!filename) return;
@@ -188,6 +192,8 @@
     }
 
     async function order() {
+        console.log("Ordering");
+
         if (!good) return;
         pdf = w.PDFDocument;
         if (pdf == undefined) return;
@@ -326,7 +332,7 @@
             {/if}
 
             {#if good && !loading}
-                <button class="info" transition:slide on:click={order}
+                <button class="info" transition:slide on:pointerup={order}
                     >Order</button
                 >
             {/if}
@@ -355,12 +361,13 @@
 
     input,
     select {
-        width: calc(calc(100vw - 18ch) - 2em);
+        width: calc(calc(90vw - 18ch) - 2em);
         padding: 1em;
         border-radius: 0.25em;
         font-weight: bold;
         font-size: 16px;
         color: black;
+        flex-grow: 1;
         font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
@@ -373,13 +380,21 @@
         padding: 1rem;
     }
 
+    form > .cb {
+        display: flex;
+        gap: 2em;
+        align-items: center;
+        font-size: large;
+        padding: 1rem;
+        justify-content: space-between;
+    }
+
     [type="checkbox"] {
         width: auto;
         -webkit-appearance: none;
         appearance: none;
         font: inherit;
         color: white;
-        margin-inline-start: 1em;
         width: 1.15em;
         height: 1.15em;
         border: 0.15em solid currentColor;
@@ -389,6 +404,7 @@
         padding: 0;
         place-content: center;
         background-color: white;
+        flex-grow: 0;
     }
 
     input[type="checkbox"]::before {
@@ -409,16 +425,6 @@
         justify-content: center;
     }
 
-    form > .cb {
-        display: flex;
-        justify-content: space-between;
-        gap: 2em;
-        align-items: center;
-        font-size: large;
-        padding: 1rem;
-        justify-content: start;
-    }
-
     form {
         height: 100%;
         font-size: large;
@@ -428,11 +434,12 @@
         background-color: #555;
         padding-bottom: 4rem;
         border-radius: 1rem;
+        overflow: hidden;
     }
 
     button {
         position: fixed;
-        bottom: 1px;
+        bottom: 2px;
         left: 1px;
         right: 1px;
         text-align: center;
@@ -445,7 +452,9 @@
     }
 
     label {
+        min-width: calc(8ch);
         font-family: Verdana, Geneva, Tahoma, sans-serif;
+        cursor: pointer;
     }
 
     button#download {

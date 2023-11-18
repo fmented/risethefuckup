@@ -7,9 +7,12 @@
     import { page } from "$app/stores";
     import { supported, fileSave } from "browser-fs-access";
     import { canShare, share } from "$lib/share";
-    import { fade, fly, slide } from "svelte/transition";
-
+    import { flip } from "svelte/animate";
+    // import { fade, fly, slide } from "svelte/transition";
+    import Spinner from "$lib/Spinner.svelte";
     let trigger: HTMLElement;
+    let loading_text = "Fetching data....";
+    let processing = false;
 
     async function download(
         ticket: (Ticket & { Merch: Merch | null }) | null,
@@ -17,6 +20,7 @@
     ) {
         if (!pdf || !ticket) return;
         loading = true;
+        processing = true;
         const target = e.target as HTMLTableColElement;
         target.parentElement!.classList.add("info");
         const filename = `${ticket.name}_${ticket.id}.pdf`;
@@ -49,6 +53,8 @@
                 return;
             }
         }
+
+        processing = false;
 
         async function _d() {
             trigger.removeEventListener("click", _d);
@@ -108,6 +114,7 @@
         }
 
         trigger.addEventListener("click", _d);
+        trigger.style.textDecoration = "underline";
         text = "Click here to download";
     }
 
@@ -135,34 +142,84 @@
 
     let text: string = "";
 
-    let data: Array<Ticket & { Merch: Merch | null }> | null = null;
+    type D = Ticket & { Merch: Merch | null };
+
+    let data: Array<D> | null = null;
+
+    function sort(prop: "Merch" | "id" | "name" | "email") {
+        return (a: D, b: D) => {
+            const x =
+                prop == "Merch"
+                    ? a.Merch?.size.toLowerCase() || "-"
+                    : a[prop].toLowerCase();
+            const y =
+                prop == "Merch"
+                    ? b.Merch?.size.toLowerCase() || "-"
+                    : b[prop].toLowerCase();
+            if (x < y) {
+                return -1;
+            }
+            if (x > y) {
+                return 1;
+            }
+            return 0;
+        };
+    }
+
+    function sortReverse(prop: "Merch" | "id" | "name" | "email") {
+        return (a: D, b: D) => {
+            const y =
+                prop == "Merch"
+                    ? a.Merch?.size.toLowerCase() || "-"
+                    : a[prop].toLowerCase();
+            const x =
+                prop == "Merch"
+                    ? b.Merch?.size.toLowerCase() || "-"
+                    : b[prop].toLowerCase();
+            if (x < y) {
+                return -1;
+            }
+            if (x > y) {
+                return 1;
+            }
+            return 0;
+        };
+    }
 
     onMount(async () => {
         w = window as GW & typeof window;
         pdf = w.PDFDocument;
+        try {
+            const res = await window.fetch(
+                dev
+                    ? `http://${$page.url.hostname}:3000/stats`
+                    : `${import.meta.env.VITE_EMAIL_URL}/stats`,
+                {
+                    headers: {
+                        "content-type": "application/json",
+                        "no-cors": "true",
+                    },
+                }
+            );
 
-        const res = await window.fetch(
-            dev
-                ? `http://${$page.url.hostname}:3000/stats`
-                : `${import.meta.env.VITE_EMAIL_URL}/stats`,
-            {
-                headers: {
-                    "content-type": "application/json",
-                    "no-cors": "true",
-                },
+            const json = (await res.json()) as {
+                data: Array<Ticket & { Merch: Merch | null }>;
+                error: string | null;
+            };
+
+            if (json.data) {
+                data = json.data;
+                // .filter((i) => i.name != "OTS");
+
+                if (data && data.length == 0) loading_text = "Data is empty :(";
             }
-        );
-        const json = (await res.json()) as {
-            data: Array<Ticket & { Merch: Merch | null }>;
-            error: string | null;
-        };
-
-        if (json.data) {
-            data = json.data.filter((i) => i.name != "OTS");
-        } else {
-            console.log(json);
+        } catch (error) {
+            loading_text = "Couldn't load the data :(";
+            console.clear();
         }
     });
+
+    const th = [0, 0, 0, 0];
 
     type Unwrap<A> = A extends unknown[] ? Unwrap<A[number]> : A;
 
@@ -201,6 +258,7 @@
     async function resend(d: Unwrap<typeof data>, e: Event) {
         if (pdf == undefined || !d) return;
         loading = true;
+        processing = true;
         text = "Preparing PDF";
         const target = e.target as HTMLSpanElement;
         target.parentElement!.classList.add("info");
@@ -220,6 +278,7 @@
         }
 
         setTimeout(() => {
+            processing = false;
             loading = false;
             target.parentElement!.classList.remove("info");
         }, 1000);
@@ -237,29 +296,70 @@
     <div class="main">
         <div class="slide">
             <h1>Ticket</h1>
-            {#if !data}
+            {#if !data || !data.length}
                 <div class="min">
-                    <strong> Fetching Data.... </strong>
+                    <strong> {loading_text} </strong>
                 </div>
-            {:else if data.length == 0}
-                <div class="min" style="animation-delay: 400ms;" />
-                <strong> {"Data Is Empty :("} </strong>
             {:else}
-                <div class="slide">
+                <div class="tick">
                     <strong>{data?.length || 0} Rows</strong>
                 </div>
-                <table class="tick">
+                <table class="slide">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Merch</th>
+                            <th
+                                on:click={(_) => {
+                                    if (!data || !data.length) return;
+                                    data.sort(
+                                        th[0] % 2 == 1
+                                            ? sort("id")
+                                            : sortReverse("id")
+                                    );
+                                    th[0]++;
+                                    data = data;
+                                }}>ID</th
+                            >
+                            <th
+                                on:click={(_) => {
+                                    if (!data || !data.length) return;
+                                    data.sort(
+                                        th[1] % 2 == 1
+                                            ? sort("name")
+                                            : sortReverse("name")
+                                    );
+                                    th[1]++;
+                                    data = data;
+                                }}>Name</th
+                            >
+                            <th
+                                on:click={(_) => {
+                                    if (!data || !data.length) return;
+                                    data.sort(
+                                        th[2] % 2 == 1
+                                            ? sort("email")
+                                            : sortReverse("email")
+                                    );
+                                    th[2]++;
+                                    data = data;
+                                }}>Email</th
+                            >
+                            <th
+                                on:click={(_) => {
+                                    if (!data || !data.length) return;
+                                    data.sort(
+                                        th[3] % 2 == 1
+                                            ? sort("Merch")
+                                            : sortReverse("Merch")
+                                    );
+                                    th[3]++;
+                                    data = data;
+                                }}>Merch</th
+                            >
                         </tr>
                     </thead>
                     <tbody>
-                        {#each data as r, i}
-                            <tr>
+                        {#each data as r (r)}
+                            <tr animate:flip={{ duration: 800 }}>
                                 <td>
                                     <!-- svelte-ignore a11y-no-static-element-interactions -->
                                     <span
@@ -298,8 +398,11 @@
 </div>
 
 {#if loading}
-    <div class="overlay">
-        <strong bind:this={trigger}>{text}</strong>
+    <div class="overlay" class:processing>
+        {#if processing}
+            <Spinner />
+        {/if}
+        <strong bind:this={trigger} style="cursor: pointer;">{text}</strong>
     </div>
 {/if}
 
@@ -310,6 +413,7 @@
         text-align: center;
         font-family: Verdana, Geneva, Tahoma, sans-serif;
         user-select: none;
+        cursor: pointer;
     }
 
     td {
@@ -429,5 +533,11 @@
         /* button {
             display: none;
         } */
+    }
+
+    .processing {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 </style>

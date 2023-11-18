@@ -3,19 +3,22 @@
 
 import { build, files, version } from '$service-worker';
 
-const worker = (self as unknown) as ServiceWorkerGlobalScope;
+const worker = (self as unknown) as ServiceWorkerGlobalScope
 const CACHE = `cache-${version}`;
+
 
 const ASSETS = [
     ...build, // the app itself
     ...files  // everything in `static`
 ];
 
+
 worker.addEventListener('install', (event) => {
     // Create a new cache and add all files to it
     async function addFilesToCache() {
         const cache = await caches.open(CACHE);
         await cache.addAll(ASSETS);
+
     }
 
     event.waitUntil(addFilesToCache());
@@ -49,8 +52,8 @@ async function fetchAndCache(request: Request) {
 
 
 worker.addEventListener('fetch', (event) => {
-    // ignore POST requests etc
-    if (event.request.method !== 'GET') return;
+
+    if (event.request.method !== 'GET' || !event.request.url.startsWith("http")) return;
 
     async function respond(): Promise<Response> {
         const url = new URL(event.request.url);
@@ -68,7 +71,7 @@ worker.addEventListener('fetch', (event) => {
             const response = await fetch(event.request);
 
             if (response.status === 200) {
-                cache.put(event.request, response.clone());
+                await cache.put(event.request, response.clone());
             }
 
             return response;
@@ -80,3 +83,4 @@ worker.addEventListener('fetch', (event) => {
 
     event.respondWith(respond());
 });
+

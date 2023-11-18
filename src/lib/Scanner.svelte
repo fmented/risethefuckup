@@ -39,7 +39,9 @@
                 true
             );
 
-            html5QrcodeScanner.render(onScanSuccess, undefined);
+            setTimeout(() => {
+                html5QrcodeScanner.render(onScanSuccess, undefined);
+            }, 300);
         }
     }
 

@@ -61,7 +61,7 @@
         animation-duration: 800ms;
         animation-timing-function: cubic-bezier(0.39, 0.575, 0.565, 1);
         animation-fill-mode: forwards;
-        animation-delay: 100ms;
+        animation-delay: 200ms;
     }
 
     @keyframes rotate {

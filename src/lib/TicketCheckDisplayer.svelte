@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { Ticket } from "$lib";
     import QRCode from "qrcode-svg";
-    import ETicket from "$lib/ETicket.svelte";
 
     export let ticket: Ticket;
 
@@ -21,10 +20,6 @@
 
 <form>
     {#if qr !== undefined}
-        <div class="q">
-            <ETicket {qr} />
-        </div>
-
         <div class="noprint">
             {@html new QRCode({
                 content: qr,
@@ -90,10 +85,6 @@
         padding: 1rem;
     }
 
-    .q {
-        display: none;
-    }
-
     form {
         height: 100%;
         font-size: large;
@@ -118,11 +109,6 @@
 
         form {
             height: max-content;
-        }
-
-        .q {
-            display: flex;
-            justify-content: center;
         }
     }
 </style>
