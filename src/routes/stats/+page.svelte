@@ -191,7 +191,7 @@
             clearInterval(timer);
 
             if (json.data) {
-                data = json.data;
+                data = json.data.filter((i) => i.name == "OTS");
                 if (data && data.length == 0) loading_text = "Data is empty :(";
             }
         } catch (error) {
