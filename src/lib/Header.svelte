@@ -48,7 +48,6 @@
         padding: 0.5em;
         font-weight: 600;
         background-color: #555;
-
         border-radius: 1rem;
     }
 
@@ -57,11 +56,13 @@
         color: #555;
         border-radius: 0.5rem;
         padding-inline: 2em;
+        will-change: transform opacity;
+
         animation-name: rotate;
         animation-duration: 800ms;
         animation-timing-function: cubic-bezier(0.39, 0.575, 0.565, 1);
         animation-fill-mode: forwards;
-        animation-delay: 200ms;
+        animation-delay: 500ms;
     }
 
     @keyframes rotate {

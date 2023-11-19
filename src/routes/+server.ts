@@ -31,9 +31,9 @@ export const POST: RequestHandler = async ({ cookies, request, }) => {
 
     } catch (error) {
         console.log(error)
+        return new Response(JSON.stringify({ status: "Invalid Passcode" }));
     }
 
-    return new Response(JSON.stringify({ status: "Invalid Passcode" }));
 }
 
 

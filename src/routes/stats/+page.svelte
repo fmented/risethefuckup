@@ -2,65 +2,48 @@
     import type { Merch, Ticket } from "$lib";
     import Header from "$lib/Header.svelte";
     import { onMount } from "svelte";
-    import { generateReceipt, generateTicket } from "$lib";
     import { dev } from "$app/environment";
     import { page } from "$app/stores";
     import { supported, fileSave } from "browser-fs-access";
     import { canShare, share } from "$lib/share";
     import { flip } from "svelte/animate";
-    // import { fade, fly, slide } from "svelte/transition";
+    import { cubicInOut } from "svelte/easing";
+
+    import { pdf as p } from "$lib/pdf";
     import Spinner from "$lib/Spinner.svelte";
     let trigger: HTMLElement;
-    let loading_text = "Fetching data....";
+    let loading_text = "Fetching data.";
     let processing = false;
+
+    function randomInt(max: number = 30) {
+        return function () {
+            return Math.floor(Math.random() * (max + 1));
+        };
+    }
+
+    const random = randomInt(15);
 
     async function download(
         ticket: (Ticket & { Merch: Merch | null }) | null,
         e: Event
     ) {
-        if (!pdf || !ticket) return;
+        if (!ticket) return;
         loading = true;
         processing = true;
         const target = e.target as HTMLTableColElement;
         target.parentElement!.classList.add("info");
         const filename = `${ticket.name}_${ticket.id}.pdf`;
-        text = "Preparing PDF for download";
-        let blob: Blob;
-
-        if (ticket.Merch) {
-            try {
-                blob = await generateReceipt(
-                    { ...ticket.Merch, ticket: ticket },
-                    pdf
-                );
-            } catch (error) {
-                text = (error as Error).message;
-
-                setTimeout(() => {
-                    loading = false;
-                }, 1000);
-                return;
-            }
-        } else {
-            try {
-                blob = await generateTicket(ticket, pdf);
-            } catch (error) {
-                text = (error as Error).message;
-
-                setTimeout(() => {
-                    loading = false;
-                }, 1000);
-                return;
-            }
-        }
+        text = "Preparing PDF";
+        let file = await $p.createPDF(ticket);
 
         processing = false;
 
         async function _d() {
-            trigger.removeEventListener("click", _d);
-            if (canShare({ blob, filename })) {
+            trigger.style.textDecoration = "";
+
+            if (canShare(file)) {
                 text = "Sharing PDF";
-                return share({ blob, filename })
+                return share(file)
                     ?.then((_) => {
                         loading = false;
                         target.parentElement!.classList.remove("info");
@@ -73,7 +56,6 @@
                     })
                     .finally(() => {
                         target.parentElement!.classList.remove("info");
-                        trigger.style.textDecoration = "";
                     });
             }
 
@@ -93,7 +75,7 @@
 
                     text = "Download is starting";
                     const wstream = await handle.createWritable();
-                    await wstream.write(blob);
+                    await wstream.write(file);
                     await wstream.close();
 
                     text = "Download is completed";
@@ -105,7 +87,7 @@
                     loading = false;
                 }
             } else {
-                await fileSave(blob, {
+                await fileSave(file, {
                     fileName: filename,
                     extensions: [".pdf"],
                 });
@@ -113,33 +95,23 @@
             }
 
             target.parentElement!.classList.remove("info");
-            trigger.style.textDecoration = "";
         }
 
-        trigger.addEventListener("click", _d);
+        trigger.addEventListener("click", _d, { once: true });
         trigger.style.textDecoration = "underline";
+        trigger.parentElement!.addEventListener(
+            "click",
+            (e) => {
+                e.stopImmediatePropagation();
+                e.stopPropagation();
+                target.parentElement!.classList.remove("info");
+                if (trigger) trigger.style.textDecoration = "";
+                loading = false;
+            },
+            { once: true }
+        );
         text = "Click here to download";
     }
-
-    interface GW {
-        PDFDocument: PDFKit.PDFDocument;
-    }
-
-    // function action(
-    //     node: HTMLElement,
-    //     { ticket }: { ticket: (Ticket & { Merch: Merch | null }) | null }
-    // ) {
-    //     node.addEventListener("click", (e) => download(ticket, e));
-
-    //     return {
-    //         destroy() {
-    //             node.removeEventListener("click", (e) => download(ticket, e));
-    //         },
-    //     };
-    // }
-
-    let w: GW & typeof window;
-    let pdf: PDFKit.PDFDocument;
 
     let loading = false;
 
@@ -190,8 +162,14 @@
     }
 
     onMount(async () => {
-        w = window as GW & typeof window;
-        pdf = w.PDFDocument;
+        const timer = setInterval(
+            () =>
+                (loading_text =
+                    loading_text.length > 40
+                        ? "Fetching data.."
+                        : loading_text + "."),
+            300
+        );
         try {
             const res = await window.fetch(
                 dev
@@ -210,19 +188,20 @@
                 error: string | null;
             };
 
+            clearInterval(timer);
+
             if (json.data) {
                 data = json.data;
-                // .filter((i) => i.name != "OTS");
-
                 if (data && data.length == 0) loading_text = "Data is empty :(";
             }
         } catch (error) {
+            clearInterval(timer);
             loading_text = "Couldn't load the data :(";
             console.clear();
         }
     });
 
-    const th = [0, 0, 0, 0];
+    let th = [0, 0, 0, 0];
 
     type Unwrap<A> = A extends unknown[] ? Unwrap<A[number]> : A;
 
@@ -259,20 +238,18 @@
     }
 
     async function resend(d: Unwrap<typeof data>, e: Event) {
-        if (pdf == undefined || !d) return;
+        if (!d) return;
         loading = true;
         processing = true;
         text = "Preparing PDF";
         const target = e.target as HTMLSpanElement;
         target.parentElement!.classList.add("info");
 
-        const blob = d.Merch
-            ? await generateReceipt({ ...d.Merch, ticket: d }, pdf)
-            : await generateTicket(d, pdf);
+        const file = await $p.createPDF(d);
 
         text = "Re-sending PDF to " + d.email;
 
-        const { status } = await sendEmail(d, await blob.arrayBuffer());
+        const { status } = await sendEmail(d, await file.arrayBuffer());
 
         if (status && status == "Success") {
             text = "Done re-sending PDF";
@@ -287,11 +264,41 @@
         }, 1000);
     }
 
+    type TableHeader = "Merch" | "id" | "name" | "email";
+
+    function createHeaders() {
+        return (["id", "name", "email", "Merch"] as TableHeader[]).map((e, i) =>
+            createheader(e, i)
+        );
+    }
+
+    function createheader(by: TableHeader, idx: number) {
+        return {
+            SORT() {
+                if (!data || !data.length) return;
+                th = th.map((_, i) => (i == idx ? th[idx] : 0));
+                data.sort(th[idx] % 2 == 0 ? sort(by) : sortReverse(by));
+                th[idx]++;
+                data = data;
+            },
+
+            MARK:
+                th[idx] == 0
+                    ? `${by}`
+                    : th[idx] % 2 == 1
+                    ? `${by} ⬇️`
+                    : `${by} ⬆️`,
+        };
+    }
+
     const f = Intl.DateTimeFormat("id", {
         dateStyle: "short",
         timeZone: "Asia/Jakarta",
         timeStyle: "short",
     });
+
+    let hearders = createHeaders();
+    $: th, (hearders = createHeaders());
 </script>
 
 <div class="fuck">
@@ -300,72 +307,28 @@
         <div class="slide">
             <h1>Ticket</h1>
             {#if !data || !data.length}
-                <div class="min">
+                <div class="min" style="will-change: transform opacity;">
                     <strong> {loading_text} </strong>
                 </div>
             {:else}
-                <div class="tick">
+                <div class="tick" style="will-change: transform opacity;">
                     <strong>{data?.length || 0} Rows</strong>
                 </div>
-                <table class="slide">
+                <table class="slide" style="will-change: transform opacity;">
                     <thead>
                         <tr>
-                            <th
-                                on:click={(_) => {
-                                    if (!data || !data.length) return;
-                                    data.sort(
-                                        th[0] % 2 == 1
-                                            ? sort("id")
-                                            : sortReverse("id")
-                                    );
-                                    th[0]++;
-                                    data = data;
-                                }}>ID</th
-                            >
-                            <th
-                                on:click={(_) => {
-                                    if (!data || !data.length) return;
-                                    data.sort(
-                                        th[1] % 2 == 1
-                                            ? sort("name")
-                                            : sortReverse("name")
-                                    );
-                                    th[1]++;
-                                    data = data;
-                                }}>Name</th
-                            >
-                            <th
-                                on:click={(_) => {
-                                    if (!data || !data.length) return;
-                                    data.sort(
-                                        th[2] % 2 == 1
-                                            ? sort("email")
-                                            : sortReverse("email")
-                                    );
-                                    th[2]++;
-                                    data = data;
-                                }}>Email</th
-                            >
-                            <th
-                                on:click={(_) => {
-                                    if (!data || !data.length) return;
-                                    data.sort(
-                                        th[3] % 2 == 1
-                                            ? sort("Merch")
-                                            : sortReverse("Merch")
-                                    );
-                                    th[3]++;
-                                    data = data;
-                                }}>Merch</th
-                            >
+                            {#each hearders as header}
+                                <th on:click={header.SORT}>{header.MARK}</th>
+                            {/each}
                         </tr>
                     </thead>
                     <tbody>
                         {#each data as r, i (r)}
                             <tr
                                 animate:flip={{
-                                    duration: 300 + 30 * i,
-                                    delay: 20 * i,
+                                    duration: 300 + 10 * i,
+                                    delay: random() * i,
+                                    easing: cubicInOut,
                                 }}
                             >
                                 <td>
@@ -424,6 +387,10 @@
         cursor: pointer;
     }
 
+    th {
+        text-transform: uppercase;
+    }
+
     td {
         max-width: calc(24vw - 2rem);
         overflow: hidden;
@@ -438,11 +405,15 @@
         user-select: none;
     }
 
+    tr:nth-child(even) {
+        background-color: #555;
+    }
+
     span {
         cursor: pointer;
         user-select: none;
         margin-inline: 0.25rem;
-        font-size: x-small;
+        font-size: 12px;
     }
 
     td {
@@ -461,6 +432,7 @@
         table-layout: auto;
         width: 100%;
         border-collapse: collapse;
+        will-change: transform opacity;
     }
 
     .fuck {

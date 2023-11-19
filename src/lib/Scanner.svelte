@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from "svelte";
+    import { createEventDispatcher, onDestroy, onMount } from "svelte";
     import {
         Html5QrcodeScanner,
         Html5QrcodeScanType,
@@ -27,19 +27,21 @@
             html5QrcodeScanner.clear();
         }
         if (browser) {
-            html5QrcodeScanner = new Html5QrcodeScanner(
-                "qr-reader",
-                {
-                    fps: 10,
-                    qrbox: 250,
-                    rememberLastUsedCamera: true,
-                    supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-                    formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-                },
-                true
-            );
-
             setTimeout(() => {
+                html5QrcodeScanner = new Html5QrcodeScanner(
+                    "qr-reader",
+                    {
+                        fps: 10,
+                        qrbox: 250,
+                        rememberLastUsedCamera: true,
+                        supportedScanTypes: [
+                            Html5QrcodeScanType.SCAN_TYPE_CAMERA,
+                        ],
+                        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+                    },
+                    true
+                );
+
                 html5QrcodeScanner.render(onScanSuccess, undefined);
             }, 300);
         }
@@ -49,6 +51,10 @@
         initialize();
 
         window.addEventListener("resize", initialize);
+    });
+
+    onDestroy(() => {
+        if (html5QrcodeScanner) html5QrcodeScanner.clear();
     });
 </script>
 

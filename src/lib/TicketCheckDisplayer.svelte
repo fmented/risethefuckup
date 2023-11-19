@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Ticket } from "$lib";
-    import QRCode from "qrcode-svg";
+    import { qr as q } from "./qr";
 
     export let ticket: Ticket;
 
@@ -21,13 +21,11 @@
 <form>
     {#if qr !== undefined}
         <div class="noprint">
-            {@html new QRCode({
-                content: qr,
-                background: "#222",
-                color: "#ED7",
-                join: true,
-                container: "svg-viewbox",
-            }).svg()}
+            {#await $q.createQR(qr)}
+                <strong style="flex-grow: 1;"> Loading Qr </strong>
+            {:then c}
+                {@html c}
+            {/await}
         </div>
     {/if}
 

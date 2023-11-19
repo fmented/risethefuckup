@@ -2,28 +2,15 @@
     import type { Merch, Ticket } from "@prisma/client";
     import Header from "$lib/Header.svelte";
     import { slide } from "svelte/transition";
-    import { generateReceipt, generateTicket } from "$lib";
-    import { onMount } from "svelte";
+    import { pdf } from "$lib/pdf";
     import { dev } from "$app/environment";
     import { page } from "$app/stores";
     import { supported, fileSave } from "browser-fs-access";
     import { canShare, share } from "$lib/share";
-    interface GW {
-        PDFDocument: PDFKit.PDFDocument;
-        SVGO: { optimize: (s: string) => string };
-    }
 
     type Data = Ticket & { Merch: Merch | null };
 
     type ResData = { data: Data; error: string | null };
-
-    let w: GW & typeof window;
-    let pdf: PDFKit.PDFDocument;
-
-    onMount(() => {
-        w = window as GW & typeof window;
-        pdf = w.PDFDocument;
-    });
 
     let name = "";
     let bundling = false;
@@ -39,13 +26,12 @@
         size = "";
     }
 
-    function createCallback(blob: Blob) {
+    function createCallback(file: File) {
         return async function () {
             if (!filename) return;
-            // window.location.pathname = `/download-pdf`;
 
-            if (canShare({ blob, filename })) {
-                return share({ blob, filename })?.then((_) => {
+            if (canShare(file)) {
+                return share(file)?.then((_) => {
                     name = "";
                     size = "";
                     email = "";
@@ -69,7 +55,7 @@
                         ],
                     });
                     const wstream = await handle.createWritable();
-                    await wstream.write(blob);
+                    await wstream.write(file);
                     await wstream.close();
                     name = "";
                     size = "";
@@ -80,7 +66,7 @@
                     loading = false;
                 } catch (error) {}
             } else {
-                fileSave(blob, {
+                fileSave(file, {
                     fileName: filename,
                     extensions: [".pdf"],
                 }).then((_) => {
@@ -101,7 +87,7 @@
         callback: async () => {},
     };
 
-    let blob: Blob;
+    let file: File;
     let _pdf: ArrayBufferLike;
 
     let process = "";
@@ -179,24 +165,14 @@
     }
 
     async function generate(resdata: ResData) {
-        if (resdata.data.Merch) {
-            blob = await generateReceipt(
-                { ...resdata.data.Merch, ticket: resdata.data },
-                pdf
-            );
-            _pdf = await blob.arrayBuffer();
-        } else {
-            blob = await generateTicket(resdata.data, pdf);
-            _pdf = await blob.arrayBuffer();
+        if (resdata.data) {
+            file = await $pdf.createPDF(resdata.data);
+            _pdf = await file.arrayBuffer();
         }
     }
 
     async function order() {
-        console.log("Ordering");
-
         if (!good) return;
-        pdf = w.PDFDocument;
-        if (pdf == undefined) return;
         messages = [];
         loading = true;
         process = "Creating Data";
@@ -238,7 +214,7 @@
             _pdf
         );
 
-        download = { callback: createCallback(blob), show: true };
+        download = { callback: createCallback(file), show: true };
 
         if (!res || res.status == "Failed") {
             messages = [
@@ -257,8 +233,6 @@
         email = "";
         process = "";
     }
-
-    $: noerror = true;
 </script>
 
 <div class="fuck">
@@ -289,12 +263,9 @@
                     </div>
                 {/if}
                 {#if download.show}
-                    <div
-                        class="in"
-                        id="download-button{noerror ? '-float' : ''}"
-                    >
+                    <div class="in" id="download-button{true ? '-float' : ''}">
                         <button
-                            id="download{noerror ? '-float' : ''}"
+                            id="download{true ? '-float' : ''}"
                             class="info"
                             on:click={download.callback}
                             >Download PDF file</button

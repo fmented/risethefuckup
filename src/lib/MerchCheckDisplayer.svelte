@@ -1,9 +1,10 @@
 <script lang="ts">
-    import type { Merch } from "./index.js";
-    import QRCode from "qrcode-svg";
-    import favicon from "$lib/favicon.png";
+    import type { Merch } from "@prisma/client";
+    import { qr as q } from "./qr";
 
-    export let merch: Merch;
+    type M = Merch & { valid: boolean };
+
+    export let merch: M;
 
     const f = Intl.DateTimeFormat("id", {
         dateStyle: "long",
@@ -27,15 +28,11 @@
 <form>
     {#if qr !== undefined}
         <div class="q">
-            {@html new QRCode({
-                content: qr,
-                background: "#222",
-                color: "#ED7",
-                join: true,
-                container: "svg-viewbox",
-            }).svg()}
-
-            <img src={favicon} alt="Logo" height="340" />
+            {#await $q.createQR(qr)}
+                <strong style="flex-grow: 1;"> Loading Qr </strong>
+            {:then c}
+                {@html c}
+            {/await}
         </div>
     {/if}
 
@@ -91,10 +88,6 @@
         font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
-    img {
-        display: none;
-    }
-
     div {
         display: flex;
         justify-content: space-between;
@@ -137,13 +130,6 @@
 
         .q {
             justify-content: space-around;
-        }
-
-        img,
-        :global(svg) {
-            display: initial;
-            height: 320px;
-            aspect-ratio: 1;
         }
     }
 </style>
